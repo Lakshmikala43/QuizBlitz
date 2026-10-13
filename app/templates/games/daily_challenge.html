@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}Daily Challenge — Quiz Royale{% endblock %}
+
+{% block content %}
+<div style="max-width: 760px; margin: 2rem auto;">
+  <div class="card-glass" style="margin-bottom: 2rem; border-top: 5px solid var(--accent-gold);">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+      <div>
+        <div style="display: inline-flex; align-items: center; gap: 0.5rem; color: var(--accent-gold); font-size: 0.85rem; font-weight: 700; text-transform: uppercase; margin-bottom: 0.25rem;">
+          📅 {{ challenge.challenge_date.strftime('%A, %B %d, %Y') }}
+        </div>
+        <h1 style="font-size: 2rem; font-weight: 800;">{{ challenge.title }}</h1>
+        <p style="color: var(--text-secondary); margin-top: 0.25rem;">{{ challenge.description }}</p>
+      </div>
+
+      <div style="text-align: right;">
+        <span style="display: block; font-size: 0.8rem; color: var(--text-muted);">BONUS REWARDS</span>
+        <strong style="color: var(--accent-purple); font-size: 1.1rem;">+{{ challenge.bonus_xp }} XP</strong> &bull;
+        <strong style="color: var(--accent-gold); font-size: 1.1rem;">+{{ challenge.bonus_coins }} Coins</strong>
+      </div>
+    </div>
+
+    {% if attempt %}
+      <!-- Already Attempted Today -->
+      <div style="background-color: var(--accent-deep-purple); border: 1px solid var(--accent-purple); border-radius: var(--radius-md); padding: 1.5rem; text-align: center; margin: 1.5rem 0;">
+        <span style="font-size: 2rem; display: block; margin-bottom: 0.5rem;">🎉</span>
+        <strong style="font-size: 1.25rem; color: #fff; display: block;">Challenge Completed Today!</strong>
+        <p style="color: var(--text-secondary); font-size: 0.95rem; margin-top: 0.25rem;">
+          Your ranked score today: <strong style="color: var(--accent-gold);">{{ attempt.score }} pts</strong> (Accuracy: {{ attempt.accuracy_pct|round(1) }}%)
+        </p>
+        <span style="font-size: 0.85rem; color: var(--text-muted); display: block; margin-top: 0.5rem;">
+          Return tomorrow for a fresh question set and another shot at the daily crown!
+        </span>
+      </div>
+    {% else %}
+      <!-- Ready to Play -->
+      <div style="background-color: var(--bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 1.5rem; text-align: center; margin: 1.5rem 0;">
+        <p style="color: var(--text-secondary); font-size: 0.95rem; margin-bottom: 1.25rem;">
+          Strictly <strong>one attempt allowed</strong> per warrior per day. Make every answer count!
+        </p>
+
+        <form method="POST" action="{{ url_for('games.start_game') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="game_mode" value="daily">
+          <input type="hidden" name="category" value="all">
+          <input type="hidden" name="difficulty" value="mixed">
+          <input type="hidden" name="question_count" value="10">
+
+          <button type="submit" class="btn btn-gold btn-lg" style="min-width: 220px;">
+            ⚔️ Start Daily Challenge
+          </button>
+        </form>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Today's Daily Leaderboard -->
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">Today's Trial Leaderboard</h2>
+      <span style="font-size: 0.85rem; color: var(--text-muted);">{{ leaderboard|length }} Warriors Recorded</span>
+    </div>
+
+    {% if leaderboard %}
+      <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.95rem;">
+          <thead>
+            <tr style="border-bottom: 1px solid var(--color-border); color: var(--text-muted);">
+              <th style="padding: 0.75rem 1rem;">Rank</th>
+              <th style="padding: 0.75rem 1rem;">Player</th>
+              <th style="padding: 0.75rem 1rem;">Score</th>
+              <th style="padding: 0.75rem 1rem;">Accuracy</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for entry in leaderboard %}
+              <tr style="border-bottom: 1px solid var(--color-border);">
+                <td style="padding: 0.75rem 1rem; font-weight: 700;">
+                  {% if loop.index == 1 %}🥇 1
+                  {% elif loop.index == 2 %}🥈 2
+                  {% elif loop.index == 3 %}🥉 3
+                  {% else %}#{{ loop.index }}
+                  {% endif %}
+                </td>
+                <td style="padding: 0.75rem 1rem; font-weight: 600;">
+                  {{ entry.user.effective_display_name if entry.user else "Anonymous" }}
+                </td>
+                <td style="padding: 0.75rem 1rem; color: var(--accent-gold); font-weight: 700;">
+                  {{ entry.score }} pts
+                </td>
+                <td style="padding: 0.75rem 1rem; color: var(--color-success); font-weight: 600;">
+                  {{ entry.accuracy_pct|round(1) }}%
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div style="text-align: center; padding: 2rem; color: var(--text-muted);">
+        Be the first warrior to claim the #1 spot on today's leaderboard!
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
