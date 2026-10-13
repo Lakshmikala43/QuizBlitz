@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}Question Bank Management — Admin | Quiz Royale{% endblock %}
+
+{% block content %}
+<div style="max-width: 1100px; margin: 2rem auto;">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+    <div>
+      <div style="font-size: 0.85rem; color: var(--accent-coral); font-weight: 700; text-transform: uppercase;">Question Bank Operations</div>
+      <h1 style="font-size: 2.25rem; font-weight: 800;">Manage Questions</h1>
+    </div>
+
+    <div style="display: flex; gap: 0.75rem;">
+      <a href="{{ url_for('admin.create_question') }}" class="btn btn-gold btn-sm">+ Add Question</a>
+      <a href="{{ url_for('admin.bulk_import') }}" class="btn btn-outline btn-sm">📦 Bulk Import</a>
+      <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline btn-sm">&larr; Admin Center</a>
+    </div>
+  </div>
+
+  <!-- Filters & Search Bar -->
+  <div class="card" style="margin-bottom: 1.5rem; padding: 1.25rem;">
+    <form method="GET" action="{{ url_for('admin.list_questions') }}" style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-end;">
+      <div style="flex: 2; min-width: 220px;">
+        <label class="form-label" for="search">Search Keywords</label>
+        <input type="text" id="search" name="search" class="form-control" placeholder="Search text..." value="{{ search }}">
+      </div>
+
+      <div style="flex: 1; min-width: 160px;">
+        <label class="form-label" for="category_id">Category</label>
+        <select id="category_id" name="category_id" class="form-control">
+          <option value="">All Categories</option>
+          {% for c in categories %}
+            <option value="{{ c.id }}" {% if selected_cat == c.id %}selected{% endif %}>{{ c.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div style="flex: 1; min-width: 140px;">
+        <label class="form-label" for="difficulty">Difficulty</label>
+        <select id="difficulty" name="difficulty" class="form-control">
+          <option value="">All Levels</option>
+          <option value="easy" {% if selected_diff == 'easy' %}selected{% endif %}>Easy</option>
+          <option value="medium" {% if selected_diff == 'medium' %}selected{% endif %}>Medium</option>
+          <option value="hard" {% if selected_diff == 'hard' %}selected{% endif %}>Hard</option>
+        </select>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-sm" style="height: 42px;">Filter Questions</button>
+    </form>
+  </div>
+
+  <!-- Questions Table -->
+  <div class="card">
+    {% if questions.items %}
+      <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.95rem;">
+          <thead>
+            <tr style="border-bottom: 1px solid var(--color-border); color: var(--text-muted);">
+              <th style="padding: 0.75rem 1rem;">ID</th>
+              <th style="padding: 0.75rem 1rem;">Question Text</th>
+              <th style="padding: 0.75rem 1rem;">Category</th>
+              <th style="padding: 0.75rem 1rem;">Difficulty</th>
+              <th style="padding: 0.75rem 1rem;">Status</th>
+              <th style="padding: 0.75rem 1rem;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for q in questions.items %}
+              <tr style="border-bottom: 1px solid var(--color-border);">
+                <td style="padding: 0.75rem 1rem; color: var(--text-muted); font-family: var(--font-mono);">#{{ q.id }}</td>
+                <td style="padding: 0.75rem 1rem; font-weight: 600; max-width: 380px;">
+                  {{ q.question_text }}
+                </td>
+                <td style="padding: 0.75rem 1rem; color: var(--text-secondary);">
+                  {{ q.category.name if q.category else 'None' }}
+                </td>
+                <td style="padding: 0.75rem 1rem;">
+                  <span class="pill-difficulty pill-{{ q.difficulty.lower() }}">{{ q.difficulty }}</span>
+                </td>
+                <td style="padding: 0.75rem 1rem;">
+                  <form method="POST" action="{{ url_for('admin.toggle_publish_question', question_id=q.id) }}" style="display: inline;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-sm {% if q.is_published %}btn-outline{% else %}btn-coral{% endif %}" style="font-size: 0.75rem; padding: 0.2rem 0.5rem;">
+                      {{ 'Published' if q.is_published else 'Draft' }}
+                    </button>
+                  </form>
+                </td>
+                <td style="padding: 0.75rem 1rem;">
+                  <div style="display: flex; gap: 0.5rem;">
+                    <a href="{{ url_for('admin.edit_question', question_id=q.id) }}" class="btn btn-outline btn-sm">Edit</a>
+                    <form method="POST" action="{{ url_for('admin.delete_question', question_id=q.id) }}" onsubmit="return confirm('Are you sure you want to delete question #{{ q.id }}?');" style="display: inline;">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button type="submit" class="btn btn-outline btn-sm" style="color: var(--color-danger); border-color: rgba(239,68,68,0.4);">Del</button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      {% if questions.pages > 1 %}
+        <div style="display: flex; justify-content: center; gap: 0.5rem; margin-top: 1.5rem;">
+          {% if questions.has_prev %}
+            <a href="{{ url_for('admin.list_questions', page=questions.page-1, category_id=selected_cat, difficulty=selected_diff, search=search) }}" class="btn btn-outline btn-sm">&larr; Previous</a>
+          {% endif %}
+          <span style="align-self: center; font-size: 0.9rem; color: var(--text-muted);">
+            Page {{ questions.page }} of {{ questions.pages }}
+          </span>
+          {% if questions.has_next %}
+            <a href="{{ url_for('admin.list_questions', page=questions.page+1, category_id=selected_cat, difficulty=selected_diff, search=search) }}" class="btn btn-outline btn-sm">Next &rarr;</a>
+          {% endif %}
+        </div>
+      {% endif %}
+    {% else %}
+      <div style="padding: 3rem; text-align: center; color: var(--text-muted);">
+        No questions matched your search criteria.
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
