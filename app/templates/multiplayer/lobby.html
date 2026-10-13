@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+
+{% block title %}Multiplayer Arena Lobby — Quiz Royale{% endblock %}
+
+{% block content %}
+<div style="max-width: 900px; margin: 2rem auto;">
+  <div style="text-align: center; margin-bottom: 2.5rem;">
+    <h1 style="font-size: 2.5rem; font-weight: 800; letter-spacing: -0.02em;">Multiplayer Arena</h1>
+    <p style="color: var(--text-secondary); margin-top: 0.5rem; font-size: 1.1rem;">
+      Challenge friends or battle rival warriors live with synchronized countdowns.
+    </p>
+  </div>
+
+  <!-- Actions Grid: Create vs Join -->
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 3rem;">
+    <!-- Create Room Card -->
+    <div class="card-glass" style="border-top: 4px solid var(--accent-gold);">
+      <h2 style="font-size: 1.35rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--accent-gold);">Host a Battle</h2>
+      <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.5rem;">
+        Generate a unique 6-character room code, choose the category, and invite players.
+      </p>
+
+      <form method="POST" action="{{ url_for('multiplayer.create_room') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="form-group">
+          <label class="form-label" for="category">Discipline</label>
+          <select id="category" name="category" class="form-control">
+            <option value="all">All Disciplines (Mixed)</option>
+            {% for cat in categories %}
+              <option value="{{ cat.slug }}">{{ cat.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+          <div class="form-group">
+            <label class="form-label" for="difficulty">Difficulty</label>
+            <select id="difficulty" name="difficulty" class="form-control">
+              <option value="easy">Easy</option>
+              <option value="medium" selected>Medium</option>
+              <option value="hard">Hard</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="question_count">Questions</label>
+            <select id="question_count" name="question_count" class="form-control">
+              <option value="5">5 Questions</option>
+              <option value="10" selected>10 Questions</option>
+              <option value="15">15 Questions</option>
+            </select>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-gold btn-block" style="margin-top: 0.5rem;">
+          Create Room & Host
+        </button>
+      </form>
+    </div>
+
+    <!-- Join with Code Card -->
+    <div class="card-glass" style="border-top: 4px solid var(--accent-coral); display: flex; flex-direction: column; justify-content: space-between;">
+      <div>
+        <h2 style="font-size: 1.35rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--accent-coral);">Enter Room Code</h2>
+        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.5rem;">
+          Have a 6-character room code from a rival or squad host? Enter it below:
+        </p>
+
+        <form id="join-form" onsubmit="event.preventDefault(); joinWithCode();">
+          <div class="form-group">
+            <label class="form-label" for="room-code-input">Room Code</label>
+            <input type="text" id="room-code-input" class="form-control" placeholder="e.g. A9B2X7" maxlength="10" style="text-transform: uppercase; font-size: 1.25rem; font-weight: 800; letter-spacing: 0.15em; text-align: center;" required>
+          </div>
+
+          <button type="submit" class="btn btn-coral btn-block" style="margin-top: 0.5rem;">
+            Join Arena Battle &rarr;
+          </button>
+        </form>
+      </div>
+
+      <div style="background-color: var(--bg-surface-elevated); padding: 0.85rem; border-radius: var(--radius-md); font-size: 0.85rem; color: var(--text-muted); text-align: center; margin-top: 1.5rem;">
+        ⚡ Instant WebSockets &bull; Synchronized Timers &bull; Live Podiums
+      </div>
+    </div>
+  </div>
+
+  <!-- Open Public Waiting Rooms -->
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">Open Waiting Lobbies</h2>
+      <span style="font-size: 0.85rem; color: var(--text-muted);">{{ open_rooms|length }} Available</span>
+    </div>
+
+    {% if open_rooms %}
+      <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.95rem;">
+          <thead>
+            <tr style="border-bottom: 1px solid var(--color-border); color: var(--text-muted);">
+              <th style="padding: 0.75rem 1rem;">Code</th>
+              <th style="padding: 0.75rem 1rem;">Host</th>
+              <th style="padding: 0.75rem 1rem;">Discipline</th>
+              <th style="padding: 0.75rem 1rem;">Difficulty</th>
+              <th style="padding: 0.75rem 1rem;">Players</th>
+              <th style="padding: 0.75rem 1rem;">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in open_rooms %}
+              <tr style="border-bottom: 1px solid var(--color-border);">
+                <td style="padding: 0.75rem 1rem; font-family: var(--font-mono); font-weight: 700; color: var(--accent-gold);">
+                  {{ r.room_code }}
+                </td>
+                <td style="padding: 0.75rem 1rem; font-weight: 600;">
+                  {{ r.host.effective_display_name if r.host else "Warrior" }}
+                </td>
+                <td style="padding: 0.75rem 1rem; color: var(--text-secondary);">
+                  {{ r.category.name if r.category else "All Disciplines" }}
+                </td>
+                <td style="padding: 0.75rem 1rem; text-transform: capitalize;">
+                  <span class="pill-difficulty pill-{{ r.difficulty.lower() }}">{{ r.difficulty }}</span>
+                </td>
+                <td style="padding: 0.75rem 1rem; color: var(--text-secondary);">
+                  {{ r.participant_count }} / {{ r.max_players }}
+                </td>
+                <td style="padding: 0.75rem 1rem;">
+                  <a href="{{ url_for('multiplayer.view_room', room_code=r.room_code) }}" class="btn btn-gold btn-sm">
+                    Enter
+                  </a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div style="text-align: center; padding: 2.5rem; color: var(--text-muted);">
+        No active rooms waiting right now. Host your own battle above!
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function joinWithCode() {
+    const input = document.getElementById("room-code-input");
+    const code = input.value.trim().toUpperCase();
+    if (code) {
+      window.location.href = `/multiplayer/room/${code}`;
+    }
+  }
+</script>
+{% endblock %}
