@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}{{ category.name }} — Quiz Royale{% endblock %}
+
+{% block content %}
+<div style="max-width: 700px; margin: 2rem auto;">
+  <div class="card-glass" style="border-top: 5px solid {{ category.color_hex }};">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem;">
+      <div>
+        <h1 style="font-size: 2rem; font-weight: 800;">{{ category.name }}</h1>
+        <p style="color: var(--text-secondary); margin-top: 0.5rem; font-size: 1rem;">
+          {{ category.description }}
+        </p>
+      </div>
+      <span style="font-size: 0.9rem; background: var(--bg-surface-elevated); padding: 0.4rem 0.8rem; border-radius: var(--radius-full); color: var(--accent-gold); font-weight: 700;">
+        {{ category.question_count }} Questions Available
+      </span>
+    </div>
+
+    <div style="border-top: 1px solid var(--color-border); padding-top: 1.5rem; margin-top: 1.5rem;">
+      <h2 style="font-size: 1.2rem; font-weight: 700; margin-bottom: 1rem;">Choose Difficulty to Begin</h2>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+        <a href="{{ url_for('games.setup_match', category=category.slug, difficulty='easy') }}" class="card" style="text-align: center; border-color: rgba(16, 185, 129, 0.4); text-decoration: none; color: inherit; padding: 1.25rem;">
+          <strong style="color: var(--color-success); font-size: 1.1rem; display: block;">Easy</strong>
+          <span style="font-size: 0.85rem; color: var(--text-muted); display: block; margin-top: 0.25rem;">100 Base Pts</span>
+        </a>
+        <a href="{{ url_for('games.setup_match', category=category.slug, difficulty='medium') }}" class="card" style="text-align: center; border-color: rgba(245, 158, 11, 0.4); text-decoration: none; color: inherit; padding: 1.25rem;">
+          <strong style="color: var(--accent-gold); font-size: 1.1rem; display: block;">Medium</strong>
+          <span style="font-size: 0.85rem; color: var(--text-muted); display: block; margin-top: 0.25rem;">200 Base Pts</span>
+        </a>
+        <a href="{{ url_for('games.setup_match', category=category.slug, difficulty='hard') }}" class="card" style="text-align: center; border-color: rgba(244, 63, 94, 0.4); text-decoration: none; color: inherit; padding: 1.25rem;">
+          <strong style="color: var(--accent-coral); font-size: 1.1rem; display: block;">Hard</strong>
+          <span style="font-size: 0.85rem; color: var(--text-muted); display: block; margin-top: 0.25rem;">300 Base Pts</span>
+        </a>
+      </div>
+
+      <div style="display: flex; justify-content: space-between;">
+        <a href="{{ url_for('categories.list_categories') }}" class="btn btn-outline btn-sm">&larr; Back to Disciplines</a>
+        <a href="{{ url_for('games.setup_match', category=category.slug, difficulty='mixed') }}" class="btn btn-gold btn-sm">Play Mixed Difficulty</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
