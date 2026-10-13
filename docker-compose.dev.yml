@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  web-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: quizroyale_dev
+    restart: unless-stopped
+    command: ["python", "run.py"]
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=development
+      - FLASK_DEBUG=1
+      - SECRET_KEY=dev-secret-key-12345
+      - SQLALCHEMY_DATABASE_URI=sqlite:///instance/quizroyale.db
+      - SOCKETIO_ASYNC_MODE=threading
+    volumes:
+      - .:/app
+      - dev_instance:/app/instance
+    networks:
+      - quizroyale_dev_net
+
+networks:
+  quizroyale_dev_net:
+    name: quizroyale_dev_net
+    driver: bridge
+
+volumes:
+  dev_instance:
+    name: quizroyale_dev_instance
