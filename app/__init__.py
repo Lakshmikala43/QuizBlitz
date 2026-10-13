@@ -108,19 +108,32 @@ def _register_context_processors(app):
 
 
 def _register_error_handlers(app):
-    """Register centralized error handlers."""
+    """Register centralized error handlers supporting both HTML views and API JSON responses."""
+    from flask import request, jsonify
+
+    def _format_error(code: int, name: str, description: str, template: str):
+        if request.path.startswith("/api/") or request.accept_mimetypes.best == "application/json":
+            return jsonify({
+                "status": "error",
+                "code": code,
+                "error": name,
+                "message": description,
+            }), code
+        return render_template(template), code
+
     @app.errorhandler(403)
     def forbidden(e):
-        return render_template("errors/403.html"), 403
+        return _format_error(403, "Forbidden", "You do not have permission to access this resource.", "errors/403.html")
 
     @app.errorhandler(404)
     def page_not_found(e):
-        return render_template("errors/404.html"), 404
+        return _format_error(404, "Not Found", "The requested resource was not found on this server.", "errors/404.html")
 
     @app.errorhandler(429)
     def too_many_requests(e):
-        return render_template("errors/429.html"), 429
+        return _format_error(429, "Too Many Requests", "Rate limit exceeded. Please wait before retrying.", "errors/429.html")
 
     @app.errorhandler(500)
     def internal_server_error(e):
-        return render_template("errors/500.html"), 500
+        return _format_error(500, "Internal Server Error", "An unexpected system error occurred on the server.", "errors/500.html")
+
