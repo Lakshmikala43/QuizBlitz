@@ -1,0 +1,39 @@
+# Git & Version Control
+.git
+.gitignore
+.github
+
+# Virtual Environments & Packages
+venv/
+.venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Testing & Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+tests/
+coverage.xml
+
+# Local database and transient files
+*.db
+*.sqlite
+instance/*.db
+instance/*.sqlite-wal
+instance/*.sqlite-shm
+logs/*.log
+
+# IDE & OS Artifacts
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Documentation & AI Brain Scratch
+brain/
+docs/
+scratch/
