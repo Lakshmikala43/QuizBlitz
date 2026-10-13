@@ -574,3 +574,40 @@ def dismiss_report(report_id: int):
     return redirect(url_for("admin.list_reports"))
 
 
+# --- Audit Logs ---
+@admin_bp.route("/audit-logs")
+@admin_required
+def view_audit_logs():
+    """Browse and filter historical administrative audit events."""
+    entity_filter = request.args.get("entity", "all").strip().lower()
+    page = request.args.get("page", 1, type=int)
+    per_page = 25
+
+    q = db.session.query(AuditLog)
+    if entity_filter and entity_filter != "all":
+        q = q.filter(AuditLog.target_entity == entity_filter)
+
+    q = q.order_by(AuditLog.created_at.desc())
+    total = q.count()
+    offset = max(0, (page - 1) * per_page)
+    logs = q.limit(per_page).offset(offset).all()
+    pages = max(1, (total + per_page - 1) // per_page)
+
+    pagination = {
+        "items": logs,
+        "total": total,
+        "page": page,
+        "pages": pages,
+        "has_prev": page > 1,
+        "has_next": page < pages,
+    }
+
+    return render_template(
+        "admin/audit_logs.html",
+        logs=logs,
+        pagination=pagination,
+        entity_filter=entity_filter,
+    )
+
+
+
