@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block title %}Hall of Champions — Leaderboards | Quiz Royale{% endblock %}
+
+{% block content %}
+<div style="max-width: 900px; margin: 2rem auto;">
+  <div style="text-align: center; margin-bottom: 2.5rem;">
+    <h1 style="font-size: 2.5rem; font-weight: 800; letter-spacing: -0.02em;">Hall of Champions</h1>
+    <p style="color: var(--text-secondary); margin-top: 0.5rem; font-size: 1.1rem;">
+      The greatest minds ranked by authoritative match scores.
+    </p>
+  </div>
+
+  <!-- Timeframe Selector Tabs -->
+  <div style="display: flex; justify-content: center; gap: 0.75rem; margin-bottom: 2rem;">
+    <a href="{{ url_for('leaderboards.view_leaderboard', timeframe='all_time') }}" class="btn {% if timeframe == 'all_time' %}btn-gold{% else %}btn-outline{% endif %}">
+      👑 All-Time Legends
+    </a>
+    <a href="{{ url_for('leaderboards.view_leaderboard', timeframe='weekly') }}" class="btn {% if timeframe == 'weekly' %}btn-gold{% else %}btn-outline{% endif %}">
+      ⚡ This Week
+    </a>
+    <a href="{{ url_for('leaderboards.view_leaderboard', timeframe='daily') }}" class="btn {% if timeframe == 'daily' %}btn-gold{% else %}btn-outline{% endif %}">
+      🔥 Today's Trial
+    </a>
+  </div>
+
+  <!-- Podium for Top 3 (if at least 3 present) -->
+  {% if rankings|length >= 3 %}
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 2.5rem; align-items: end;">
+      <!-- 2nd Place (Silver) -->
+      {% set second = rankings[1] %}
+      <div class="card" style="text-align: center; border-color: #94a3b8; padding: 1.5rem 1rem;">
+        <span style="font-size: 2rem;">🥈</span>
+        <strong style="display: block; font-size: 1.1rem; margin-top: 0.5rem;">{{ second.display_name }}</strong>
+        <span style="font-size: 0.85rem; color: var(--text-muted);">@{{ second.username }}</span>
+        <div style="margin-top: 0.75rem; color: var(--accent-gold); font-weight: 700;">{{ second.score }} pts</div>
+      </div>
+
+      <!-- 1st Place (Gold Champion) -->
+      {% set first = rankings[0] %}
+      <div class="card" style="text-align: center; border-color: var(--accent-gold); background: linear-gradient(180deg, rgba(245, 158, 11, 0.15), var(--bg-surface)); padding: 2rem 1rem; box-shadow: var(--shadow-gold-glow);">
+        <span style="font-size: 3rem;">👑</span>
+        <strong style="display: block; font-size: 1.3rem; margin-top: 0.5rem; color: var(--accent-gold);">{{ first.display_name }}</strong>
+        <span style="font-size: 0.85rem; color: var(--text-muted);">@{{ first.username }}</span>
+        <div style="margin-top: 0.75rem; font-size: 1.4rem; font-weight: 800; color: #fff;">{{ first.score }} pts</div>
+      </div>
+
+      <!-- 3rd Place (Bronze) -->
+      {% set third = rankings[2] %}
+      <div class="card" style="text-align: center; border-color: #b45309; padding: 1.25rem 1rem;">
+        <span style="font-size: 2rem;">🥉</span>
+        <strong style="display: block; font-size: 1.1rem; margin-top: 0.5rem;">{{ third.display_name }}</strong>
+        <span style="font-size: 0.85rem; color: var(--text-muted);">@{{ third.username }}</span>
+        <div style="margin-top: 0.75rem; color: var(--accent-gold); font-weight: 700;">{{ third.score }} pts</div>
+      </div>
+    </div>
+  {% endif %}
+
+  <!-- Full Table Rankings -->
+  <div class="card">
+    {% if rankings %}
+      <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.95rem;">
+          <thead>
+            <tr style="border-bottom: 1px solid var(--color-border); color: var(--text-muted);">
+              <th style="padding: 0.85rem 1rem;">Rank</th>
+              <th style="padding: 0.85rem 1rem;">Warrior Callsign</th>
+              <th style="padding: 0.85rem 1rem;">Level</th>
+              <th style="padding: 0.85rem 1rem;">Score</th>
+              <th style="padding: 0.85rem 1rem;">Accuracy</th>
+              <th style="padding: 0.85rem 1rem;">Battles</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in rankings %}
+              {% set is_me = (current_user.is_authenticated and current_user.id == r.user_id) %}
+              <tr style="border-bottom: 1px solid var(--color-border); {% if is_me %}background-color: rgba(245, 158, 11, 0.08); font-weight: 700;{% endif %}">
+                <td style="padding: 0.85rem 1rem; font-weight: 700;">
+                  {% if r.rank == 1 %}🥇 1
+                  {% elif r.rank == 2 %}🥈 2
+                  {% elif r.rank == 3 %}🥉 3
+                  {% else %}#{{ r.rank }}
+                  {% endif %}
+                </td>
+                <td style="padding: 0.85rem 1rem;">
+                  <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--bg-surface-elevated); border: 1px solid var(--color-border); display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 700; color: var(--accent-gold);">
+                      {{ r.display_name[:2].upper() }}
+                    </div>
+                    <div>
+                      <span style="display: block; color: var(--text-primary);">{{ r.display_name }}</span>
+                      <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: normal;">@{{ r.username }}</span>
+                    </div>
+                  </div>
+                </td>
+                <td style="padding: 0.85rem 1rem;">
+                  <span class="pill-level">Lv. {{ r.level }}</span>
+                </td>
+                <td style="padding: 0.85rem 1rem; color: var(--accent-gold); font-weight: 700;">
+                  {{ r.score }} pts
+                </td>
+                <td style="padding: 0.85rem 1rem; color: var(--color-success); font-weight: 600;">
+                  {{ r.accuracy_pct }}%
+                </td>
+                <td style="padding: 0.85rem 1rem; color: var(--text-secondary);">
+                  {{ r.matches }}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div style="text-align: center; padding: 3rem; color: var(--text-muted);">
+        No ranked matches recorded for this timeframe yet. Be the first to conquer the board!
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
