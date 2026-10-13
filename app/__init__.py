@@ -36,7 +36,12 @@ def create_app(config_name=None):
     # Register centralized error handlers
     _register_error_handlers(app)
 
+    # Initialize defense-in-depth security headers and timers
+    from app.security import init_security
+    init_security(app)
+
     return app
+
 
 
 def _register_blueprints(app):
