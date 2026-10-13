@@ -1,0 +1,268 @@
+openapi: 3.0.3
+info:
+  title: Quiz Royale REST API
+  description: >
+    Production REST API documentation for the Quiz Royale competitive gaming platform.
+    Provides complete programmatic access to authentication, catalog queries, real-time
+    gameplay state machines, leaderboards, player telemetry, and administration.
+  version: 1.0.0
+  contact:
+    name: Quiz Royale Core Engineering
+    email: engineering@quizroyale.local
+servers:
+  - url: http://localhost:5000/api/v1
+    description: Local Development Server
+paths:
+  /health:
+    get:
+      summary: Health check probe
+      description: Returns liveness status of the gaming engine.
+      responses:
+        '200':
+          description: System operational.
+
+  /status:
+    get:
+      summary: Platform telemetry
+      description: Returns runtime diagnostics and feature flags.
+      responses:
+        '200':
+          description: Operational status payload.
+
+  /auth/register:
+    post:
+      summary: Register player account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username, email, password]
+              properties:
+                username: { type: string }
+                email: { type: string, format: email }
+                password: { type: string, format: password }
+                display_name: { type: string }
+      responses:
+        '201': { description: Account created successfully. }
+        '400': { description: Validation or duplicate account error. }
+
+  /auth/login:
+    post:
+      summary: Authenticate player
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [login_identifier, password]
+              properties:
+                login_identifier: { type: string }
+                password: { type: string, format: password }
+      responses:
+        '200': { description: Authentication successful. }
+        '401': { description: Invalid credentials. }
+
+  /auth/logout:
+    post:
+      summary: Terminate session
+      responses:
+        '200': { description: Session terminated. }
+
+  /auth/me:
+    get:
+      summary: Current player session profile
+      responses:
+        '200': { description: Authenticated warrior profile and statistics. }
+        '401': { description: Unauthorized. }
+
+  /categories:
+    get:
+      summary: List all active categories
+      responses:
+        '200': { description: List of categories with question totals. }
+
+  /categories/{slug}:
+    get:
+      summary: Category details
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Category metadata and difficulty breakdown. }
+        '404': { description: Category not found. }
+
+  /questions/sample:
+    get:
+      summary: Sample published questions
+      description: Retrieves practice questions with answer correctness hidden from client.
+      parameters:
+        - name: category
+          in: query
+          schema: { type: string }
+        - name: difficulty
+          in: query
+          schema: { type: string, enum: [easy, medium, hard, mixed] }
+        - name: count
+          in: query
+          schema: { type: integer, default: 5 }
+      responses:
+        '200': { description: List of anti-cheat safe questions. }
+
+  /games/start:
+    post:
+      summary: Start a game session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                category: { type: string, default: "all" }
+                difficulty: { type: string, default: "mixed" }
+                question_count: { type: integer, default: 10 }
+                game_mode: { type: string, default: "solo" }
+      responses:
+        '201': { description: Session initialized. }
+        '401': { description: Unauthorized. }
+
+  /games/{session_id}/question:
+    get:
+      summary: Get active question
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Active question payload. }
+
+  /games/{session_id}/submit:
+    post:
+      summary: Submit question answer
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [question_id]
+              properties:
+                question_id: { type: integer }
+                selected_option_id: { type: integer }
+                idempotency_key: { type: string }
+      responses:
+        '200': { description: Submission scored authoritatively. }
+
+  /games/{session_id}/summary:
+    get:
+      summary: Match results summary
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Match final statistics and awards. }
+
+  /leaderboards:
+    get:
+      summary: Ranked competitive leaderboards
+      parameters:
+        - name: timeframe
+          in: query
+          schema: { type: string, enum: [all_time, daily, weekly] }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 25 }
+      responses:
+        '200': { description: Podium and rankings. }
+
+  /players/{username}:
+    get:
+      summary: Public warrior card
+      parameters:
+        - name: username
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Warrior profile and badges. }
+
+  /players/{username}/history:
+    get:
+      summary: Match performance history
+      parameters:
+        - name: username
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Paginated match results. }
+
+  /achievements:
+    get:
+      summary: Platform achievements catalog
+      responses:
+        '200': { description: Full achievements definitions. }
+
+  /multiplayer/rooms:
+    get:
+      summary: List multiplayer lobbies
+      responses:
+        '200': { description: Active open room lobbies. }
+    post:
+      summary: Create multiplayer room
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                category: { type: string, default: "all" }
+                difficulty: { type: string, default: "medium" }
+                question_count: { type: integer, default: 10 }
+                max_players: { type: integer, default: 8 }
+      responses:
+        '201': { description: Room lobby created. }
+
+  /multiplayer/rooms/{room_code}:
+    get:
+      summary: Get multiplayer room details
+      parameters:
+        - name: room_code
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Room status and connected participants. }
+
+  /admin/overview:
+    get:
+      summary: Administrative system metrics
+      responses:
+        '200': { description: System overview metrics. }
+        '403': { description: Forbidden. }
+
+  /admin/users:
+    get:
+      summary: User directory search
+      responses:
+        '200': { description: Paginated user listings. }
+
+  /admin/audit-logs:
+    get:
+      summary: Immutable audit trail
+      responses:
+        '200': { description: Paginated system audit records. }
