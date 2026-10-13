@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block title %}Register Callsign — Quiz Royale{% endblock %}
+
+{% block content %}
+<div style="max-width: 480px; margin: 3rem auto;">
+  <div class="card-glass">
+    <div style="text-align: center; margin-bottom: 2rem;">
+      <svg class="brand-crown" width="48" height="48" viewBox="0 0 24 24" fill="currentColor" style="margin-bottom: 0.5rem;">
+        <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/>
+      </svg>
+      <h1 style="font-size: 1.75rem; font-weight: 800;">Join the Royale</h1>
+      <p style="color: var(--text-secondary); font-size: 0.95rem; margin-top: 0.25rem;">Forge your player profile and start competing</p>
+    </div>
+
+    <form method="POST" action="{{ url_for('auth.register') }}" novalidate>
+      {{ form.hidden_tag() }}
+
+      <div class="form-group">
+        <label class="form-label" for="username">{{ form.username.label.text }}</label>
+        {{ form.username(class="form-control") }}
+        {% for error in form.username.errors %}
+          <div class="form-error">{{ error }}</div>
+        {% endfor %}
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="email">{{ form.email.label.text }}</label>
+        {{ form.email(class="form-control") }}
+        {% for error in form.email.errors %}
+          <div class="form-error">{{ error }}</div>
+        {% endfor %}
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="display_name">{{ form.display_name.label.text }}</label>
+        {{ form.display_name(class="form-control") }}
+        {% for error in form.display_name.errors %}
+          <div class="form-error">{{ error }}</div>
+        {% endfor %}
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="password">{{ form.password.label.text }}</label>
+        {{ form.password(class="form-control") }}
+        {% for error in form.password.errors %}
+          <div class="form-error">{{ error }}</div>
+        {% endfor %}
+      </div>
+
+      <div class="form-group" style="margin-bottom: 1.75rem;">
+        <label class="form-label" for="confirm_password">{{ form.confirm_password.label.text }}</label>
+        {{ form.confirm_password(class="form-control") }}
+        {% for error in form.confirm_password.errors %}
+          <div class="form-error">{{ error }}</div>
+        {% endfor %}
+      </div>
+
+      <button type="submit" class="btn btn-gold btn-block btn-lg">
+        {{ form.submit.label.text }}
+      </button>
+    </form>
+
+    <div style="text-align: center; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--color-border); font-size: 0.9rem; color: var(--text-secondary);">
+      Already a champion? <a href="{{ url_for('auth.login') }}" style="font-weight: 600;">Sign In</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
