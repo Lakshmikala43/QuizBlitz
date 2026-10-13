@@ -1,0 +1,104 @@
+name: Quiz Royale Continuous Integration
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint-and-format:
+    name: Code Quality & Linting
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: "pip"
+
+      - name: Install Development Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install flake8 black
+
+      - name: Verify Code Formatting (Black)
+        run: |
+          black --check --line-length 120 app/ scripts/ tests/ || echo "Formatting check advisory"
+
+      - name: Lint Syntax & Imports (Flake8)
+        run: |
+          # Stop build if syntax errors or undefined names exist
+          flake8 app/ --count --select=E9,F63,F7,F82 --show-source --statistics
+          # Complexity and style advisory
+          flake8 app/ --count --exit-zero --max-complexity=15 --max-line-length=120 --statistics
+
+  test-matrix:
+    name: Pytest Suite (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "pip"
+
+      - name: Install Runtime & Test Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-cov
+
+      - name: Run Pytest Test Suite with Coverage
+        env:
+          FLASK_ENV: testing
+          WTF_CSRF_ENABLED: "false"
+          SECRET_KEY: "ci-secret-key-matrix"
+        run: |
+          pytest tests/ -v --cov=app --cov-report=xml --cov-report=term-missing
+
+  loc-and-zero-dependency-audit:
+    name: Architecture & Zero-API-Key Audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Measure Codebase LOC
+        run: |
+          python scripts/measure_loc.py
+
+      - name: Verify Zero Mandatory External API Keys
+        run: |
+          # Ensure no mandatory API keys or external secrets are required
+          python -c "
+          from app import create_app
+          app = create_app('testing')
+          assert app is not None
+          print('Successfully initialized standalone application without external keys!')
+          "
