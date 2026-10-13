@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}Quiz Royale — The Ultimate Competitive Quiz Gaming Arena{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section style="text-align: center; padding: 4rem 1rem 3rem;">
+  <div style="display: inline-flex; align-items: center; gap: 0.5rem; background: var(--accent-deep-purple); border: 1px solid var(--accent-purple); padding: 0.35rem 1rem; border-radius: var(--radius-full); margin-bottom: 1.5rem; font-size: 0.85rem; font-weight: 600; color: var(--accent-amber);">
+    <span>⚔️ Season 1 Live: Competitive Quiz Arena</span>
+  </div>
+
+  <h1 style="font-size: clamp(2.5rem, 5vw, 4rem); font-weight: 900; line-height: 1.1; margin-bottom: 1.25rem; letter-spacing: -0.03em;">
+    Test Your Intellect.<br>
+    <span style="background: linear-gradient(135deg, var(--accent-gold), #ec4899, var(--accent-purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+      Dominate the Leaderboard.
+    </span>
+  </h1>
+
+  <p style="font-size: 1.2rem; color: var(--text-secondary); max-width: 650px; margin: 0 auto 2.5rem;">
+    Experience real-time competitive trivia with millisecond precision, authoritative game scoring, 14 categories, and multiplayer battles.
+  </p>
+
+  <div style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+    <a href="{{ url_for('auth.register') }}" class="btn btn-gold btn-lg" style="min-width: 200px;">
+      Enter the Arena
+    </a>
+    <a href="{{ url_for('auth.login') }}" class="btn btn-outline btn-lg" style="min-width: 160px;">
+      Player Login
+    </a>
+  </div>
+</section>
+
+<!-- Live Platform Metrics Banner -->
+<section style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; margin: 2rem 0 4rem;">
+  <div class="card" style="text-align: center; border-color: rgba(245, 158, 11, 0.3);">
+    <div style="font-size: 2.25rem; font-weight: 800; color: var(--accent-gold);">{{ total_questions }}+</div>
+    <div style="color: var(--text-secondary); font-size: 0.9rem; font-weight: 600; text-transform: uppercase;">Curated Questions</div>
+  </div>
+  <div class="card" style="text-align: center; border-color: rgba(139, 92, 246, 0.3);">
+    <div style="font-size: 2.25rem; font-weight: 800; color: var(--accent-purple);">{{ total_players }}+</div>
+    <div style="color: var(--text-secondary); font-size: 0.9rem; font-weight: 600; text-transform: uppercase;">Registered Warriors</div>
+  </div>
+  <div class="card" style="text-align: center; border-color: rgba(244, 63, 94, 0.3);">
+    <div style="font-size: 2.25rem; font-weight: 800; color: var(--accent-coral);">{{ total_matches }}+</div>
+    <div style="color: var(--text-secondary); font-size: 0.9rem; font-weight: 600; text-transform: uppercase;">Completed Battles</div>
+  </div>
+  <div class="card" style="text-align: center; border-color: rgba(16, 185, 129, 0.3);">
+    <div style="font-size: 2.25rem; font-weight: 800; color: var(--color-success);">6</div>
+    <div style="color: var(--text-secondary); font-size: 0.9rem; font-weight: 600; text-transform: uppercase;">Battle Game Modes</div>
+  </div>
+</section>
+
+<!-- Battle Game Modes Grid -->
+<section style="margin-bottom: 5rem;">
+  <div style="text-align: center; margin-bottom: 3rem;">
+    <h2 style="font-size: 2rem; font-weight: 800;">Competitive Game Modes</h2>
+    <p style="color: var(--text-secondary); margin-top: 0.5rem;">Choose your challenge style and earn XP</p>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem;">
+    <div class="card-glass">
+      <div style="font-size: 2rem; margin-bottom: 0.75rem;">🎯</div>
+      <h3 style="font-size: 1.25rem; margin-bottom: 0.5rem;">Solo Classic</h3>
+      <p style="color: var(--text-secondary); font-size: 0.9rem;">
+        Standard competitive quiz. Choose categories and difficulty (Easy, Medium, Hard). Maximize your streak multiplier!
+      </p>
+    </div>
+
+    <div class="card-glass">
+      <div style="font-size: 2rem; margin-bottom: 0.75rem;">⚡</div>
+      <h3 style="font-size: 1.25rem; margin-bottom: 0.5rem;">Time Attack</h3>
+      <p style="color: var(--text-secondary); font-size: 0.9rem;">
+        60 seconds on the clock. Answer as many rapid-fire questions as possible before time runs out.
+      </p>
+    </div>
+
+    <div class="card-glass">
+      <div style="font-size: 2rem; margin-bottom: 0.75rem;">🛡️</div>
+      <h3 style="font-size: 1.25rem; margin-bottom: 0.5rem;">Survival Mode</h3>
+      <p style="color: var(--text-secondary); font-size: 0.9rem;">
+        You start with 3 lives. Every wrong answer or timeout costs a life. How far can you endure?
+      </p>
+    </div>
+
+    <div class="card-glass">
+      <div style="font-size: 2rem; margin-bottom: 0.75rem;">📅</div>
+      <h3 style="font-size: 1.25rem; margin-bottom: 0.5rem;">Daily Challenge</h3>
+      <p style="color: var(--text-secondary); font-size: 0.9rem;">
+        A deterministic 10-question quiz identical for all players each day. Exactly one ranked attempt per warrior!
+      </p>
+    </div>
+
+    <div class="card-glass">
+      <div style="font-size: 2rem; margin-bottom: 0.75rem;">⚔️</div>
+      <h3 style="font-size: 1.25rem; margin-bottom: 0.5rem;">Multiplayer Battle</h3>
+      <p style="color: var(--text-secondary); font-size: 0.9rem;">
+        Real-time Socket.IO rooms. Face up to 8 players simultaneously with synchronized countdowns and live standing updates.
+      </p>
+    </div>
+
+    <div class="card-glass">
+      <div style="font-size: 2rem; margin-bottom: 0.75rem;">📖</div>
+      <h3 style="font-size: 1.25rem; margin-bottom: 0.5rem;">Practice Mode</h3>
+      <p style="color: var(--text-secondary); font-size: 0.9rem;">
+        Untimed, relaxed learning. Receive instant answer explanations and hone your skills without score pressure.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- Featured Categories Showcase -->
+<section style="margin-bottom: 4rem;">
+  <div style="text-align: center; margin-bottom: 2.5rem;">
+    <h2 style="font-size: 2rem; font-weight: 800;">14 Comprehensive Disciplines</h2>
+    <p style="color: var(--text-secondary); margin-top: 0.5rem;">From software engineering to science, logic, and culture</p>
+  </div>
+
+  <div style="display: flex; flex-wrap: wrap; gap: 0.75rem; justify-content: center;">
+    {% for cat in categories %}
+      <div style="background-color: var(--bg-surface); border: 1px solid var(--color-border); padding: 0.65rem 1.25rem; border-radius: var(--radius-full); font-size: 0.95rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
+        <span style="width: 10px; height: 10px; border-radius: 50%; background-color: {{ cat.color_hex }};"></span>
+        {{ cat.name }}
+      </div>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}
