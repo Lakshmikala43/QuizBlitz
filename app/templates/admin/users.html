@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+
+{% block title %}User Management — Admin | Quiz Royale{% endblock %}
+
+{% block content %}
+<div style="max-width: 1100px; margin: 2rem auto;">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+    <div>
+      <div style="font-size: 0.85rem; color: var(--accent-coral); font-weight: 700; text-transform: uppercase;">Platform Security & Membership</div>
+      <h1 style="font-size: 2.25rem; font-weight: 800;">Player & User Accounts</h1>
+    </div>
+
+    <div style="display: flex; gap: 0.75rem;">
+      <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline btn-sm">&larr; Admin Center</a>
+      <a href="{{ url_for('admin.list_reports') }}" class="btn btn-outline btn-sm">Moderation Reports</a>
+    </div>
+  </div>
+
+  <!-- Search & Filter Controls -->
+  <div class="card" style="margin-bottom: 1.5rem; padding: 1.25rem;">
+    <form method="GET" action="{{ url_for('admin.list_users') }}" style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-end;">
+      <div style="flex: 2; min-width: 240px;">
+        <label class="form-label" for="q">Search Warriors</label>
+        <input type="text" id="q" name="q" class="form-control" placeholder="Search by username, display name, or email..." value="{{ query_text }}">
+      </div>
+
+      <div style="flex: 1; min-width: 160px;">
+        <label class="form-label" for="status">Account Status</label>
+        <select id="status" name="status" class="form-control">
+          <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All Accounts</option>
+          <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active Only</option>
+          <option value="suspended" {% if status_filter == 'suspended' %}selected{% endif %}>Suspended Only</option>
+        </select>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-sm" style="height: 42px;">Filter Accounts</button>
+      {% if query_text or status_filter != 'all' %}
+        <a href="{{ url_for('admin.list_users') }}" class="btn btn-outline btn-sm" style="height: 42px; line-height: 28px;">Reset</a>
+      {% endif %}
+    </form>
+  </div>
+
+  <!-- Users Table Card -->
+  <div class="card">
+    {% if users %}
+      <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.95rem;">
+          <thead>
+            <tr style="border-bottom: 1px solid var(--color-border); color: var(--text-muted);">
+              <th style="padding: 0.75rem 1rem;">User ID</th>
+              <th style="padding: 0.75rem 1rem;">Warrior</th>
+              <th style="padding: 0.75rem 1rem;">Email</th>
+              <th style="padding: 0.75rem 1rem;">Privilege Level</th>
+              <th style="padding: 0.75rem 1rem;">Account State</th>
+              <th style="padding: 0.75rem 1rem;">Registered</th>
+              <th style="padding: 0.75rem 1rem; text-align: right;">Administrative Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for u in users %}
+              <tr style="border-bottom: 1px solid var(--color-border);">
+                <td style="padding: 0.75rem 1rem; color: var(--text-muted); font-family: var(--font-mono);">#{{ u.id }}</td>
+                <td style="padding: 0.75rem 1rem;">
+                  <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <div style="width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, var(--accent-purple), var(--accent-gold)); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem; color: #fff;">
+                      {{ u.username[0]|upper }}
+                    </div>
+                    <div>
+                      <div style="font-weight: 700; color: var(--text-primary);">{{ u.effective_display_name }}</div>
+                      <div style="font-size: 0.8rem; color: var(--text-muted);">@{{ u.username }}</div>
+                    </div>
+                  </div>
+                </td>
+                <td style="padding: 0.75rem 1rem; color: var(--text-muted); font-size: 0.85rem;">{{ u.email }}</td>
+                <td style="padding: 0.75rem 1rem;">
+                  {% if u.is_admin %}
+                    <span style="display: inline-block; padding: 0.2rem 0.55rem; border-radius: 999px; font-size: 0.75rem; font-weight: 700; background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3);">
+                      🛡️ Admin
+                    </span>
+                  {% else %}
+                    <span style="display: inline-block; padding: 0.2rem 0.55rem; border-radius: 999px; font-size: 0.75rem; font-weight: 600; background: rgba(148, 163, 184, 0.15); color: var(--text-muted);">
+                      Player
+                    </span>
+                  {% endif %}
+                </td>
+                <td style="padding: 0.75rem 1rem;">
+                  {% if u.is_active %}
+                    <span style="display: inline-block; padding: 0.2rem 0.55rem; border-radius: 999px; font-size: 0.75rem; font-weight: 700; background: rgba(34, 197, 94, 0.15); color: var(--color-success); border: 1px solid rgba(34, 197, 94, 0.3);">
+                      Active
+                    </span>
+                  {% else %}
+                    <span style="display: inline-block; padding: 0.2rem 0.55rem; border-radius: 999px; font-size: 0.75rem; font-weight: 700; background: rgba(244, 63, 94, 0.15); color: var(--accent-coral); border: 1px solid rgba(244, 63, 94, 0.3);">
+                      Suspended
+                    </span>
+                  {% endif %}
+                </td>
+                <td style="padding: 0.75rem 1rem; font-size: 0.8rem; color: var(--text-muted);">
+                  {{ u.created_at.strftime('%b %d, %Y') if u.created_at else 'N/A' }}
+                </td>
+                <td style="padding: 0.75rem 1rem; text-align: right;">
+                  <div style="display: inline-flex; gap: 0.5rem; align-items: center;">
+                    {% if u.id != current_user.id %}
+                      <!-- Toggle Status Form -->
+                      <form method="POST" action="{{ url_for('admin.toggle_user_status', user_id=u.id) }}" style="display: inline;" onsubmit="return confirm('Change active status for @{{ u.username }}?');">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        {% if u.is_active %}
+                          <button type="submit" class="btn btn-danger btn-sm" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Suspend</button>
+                        {% else %}
+                          <button type="submit" class="btn btn-primary btn-sm" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; background: var(--color-success); border-color: var(--color-success);">Reactivate</button>
+                        {% endif %}
+                      </form>
+
+                      <!-- Toggle Admin Form -->
+                      <form method="POST" action="{{ url_for('admin.toggle_user_admin', user_id=u.id) }}" style="display: inline;" onsubmit="return confirm('Modify administrator status for @{{ u.username }}?');">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        {% if u.is_admin %}
+                          <button type="submit" class="btn btn-outline btn-sm" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; border-color: #ef4444; color: #ef4444;">Revoke Admin</button>
+                        {% else %}
+                          <button type="submit" class="btn btn-outline btn-sm" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; border-color: var(--accent-gold); color: var(--accent-gold);">Make Admin</button>
+                        {% endif %}
+                      </form>
+                    {% else %}
+                      <span style="font-size: 0.8rem; color: var(--accent-gold); font-weight: 600;">(Current Session)</span>
+                    {% endif %}
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      {% if pagination.pages > 1 %}
+        <div style="display: flex; justify-content: center; gap: 0.5rem; padding: 1.5rem; border-top: 1px solid var(--color-border);">
+          {% if pagination.has_prev %}
+            <a href="{{ url_for('admin.list_users', page=pagination.page-1, q=query_text, status=status_filter) }}" class="btn btn-outline btn-sm">&larr; Previous</a>
+          {% endif %}
+          <span style="padding: 0.35rem 0.75rem; font-size: 0.9rem; color: var(--text-muted);">
+            Page {{ pagination.page }} of {{ pagination.pages }} ({{ pagination.total }} total accounts)
+          </span>
+          {% if pagination.has_next %}
+            <a href="{{ url_for('admin.list_users', page=pagination.page+1, q=query_text, status=status_filter) }}" class="btn btn-outline btn-sm">Next &rarr;</a>
+          {% endif %}
+        </div>
+      {% endif %}
+
+    {% else %}
+      <div style="text-align: center; padding: 3rem 1rem;">
+        <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">👥</div>
+        <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.25rem;">No accounts match your criteria</h3>
+        <p style="color: var(--text-muted); font-size: 0.9rem;">Try adjusting your keyword query or account status filter.</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

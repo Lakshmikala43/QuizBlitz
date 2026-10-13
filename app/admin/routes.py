@@ -405,3 +405,83 @@ def bulk_import():
         return redirect(url_for("admin.list_questions"))
 
     return render_template("admin/bulk_import.html")
+
+
+# --- User Management ---
+@admin_bp.route("/users")
+@admin_required
+def list_users():
+    """Paginated user directory with search and active status filters."""
+    query_text = request.args.get("q", "").strip()
+    status_filter = request.args.get("status", "all").strip().lower()
+    page = request.args.get("page", 1, type=int)
+
+    is_active = None
+    if status_filter == "active":
+        is_active = True
+    elif status_filter == "suspended":
+        is_active = False
+
+    pagination = user_repo.search_users(
+        query_text=query_text if query_text else None,
+        is_active=is_active,
+        page=page,
+        per_page=15,
+    )
+
+    return render_template(
+        "admin/users.html",
+        users=pagination["items"],
+        pagination=pagination,
+        query_text=query_text,
+        status_filter=status_filter,
+    )
+
+
+@admin_bp.route("/users/<int:user_id>/toggle-status", methods=["POST"])
+@admin_required
+def toggle_user_status(user_id: int):
+    """Suspend or reactivate a player account."""
+    if user_id == current_user.id:
+        flash("You cannot suspend your own administrative account.", "warning")
+        return redirect(url_for("admin.list_users"))
+
+    user = user_repo.get_by_id(user_id)
+    if not user:
+        flash("User not found.", "danger")
+        return redirect(url_for("admin.list_users"))
+
+    user_repo.toggle_active_status(user_id)
+    action = "reactivated" if user.is_active else "suspended"
+    log_admin_action(f"user_{action}", "user", str(user.id), {"username": user.username, "new_active": user.is_active})
+    flash(f"User @{user.username} has been {action}.", "success")
+    return redirect(url_for("admin.list_users"))
+
+
+@admin_bp.route("/users/<int:user_id>/toggle-admin", methods=["POST"])
+@admin_required
+def toggle_user_admin(user_id: int):
+    """Grant or revoke administrative privileges for a user."""
+    if user_id == current_user.id:
+        flash("You cannot modify your own administrative rank.", "warning")
+        return redirect(url_for("admin.list_users"))
+
+    user = user_repo.get_by_id(user_id)
+    if not user:
+        flash("User not found.", "danger")
+        return redirect(url_for("admin.list_users"))
+
+    user.is_admin = not user.is_admin
+    if user.is_admin:
+        user_repo.assign_role(user, "admin")
+        action = "granted_admin"
+    else:
+        user_repo.remove_role(user, "admin")
+        action = "revoked_admin"
+
+    db.session.commit()
+    log_admin_action(action, "user", str(user.id), {"username": user.username, "is_admin": user.is_admin})
+    status_str = "granted Admin privileges" if user.is_admin else "demoted to regular player"
+    flash(f"User @{user.username} has been {status_str}.", "success")
+    return redirect(url_for("admin.list_users"))
+
