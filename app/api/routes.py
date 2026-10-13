@@ -189,4 +189,79 @@ def api_get_category(slug: str):
     return success_response(data=cat_data)
 
 
+# --- Questions APIs ---
+from app.repositories import QuestionRepository
+from app.api import api_admin_required, paginate_response
+
+question_repo = QuestionRepository()
+
+
+@api_bp.route("/questions/sample")
+def api_sample_questions():
+    """
+    Retrieve a sample batch of published questions for practice or quick-fire challenge.
+    Ensures answers are scrubbed of correctness to guarantee fair play.
+    """
+    category_slug = request.args.get("category", "").strip().lower()
+    difficulty = request.args.get("difficulty", "mixed").strip().lower()
+    count = min(request.args.get("count", 5, type=int), 20)
+
+    category_id = None
+    if category_slug:
+        cat = category_repo.get_by_slug(category_slug)
+        if cat:
+            category_id = cat.id
+
+    questions = question_repo.get_random_questions(
+        category_id=category_id,
+        difficulty=difficulty if difficulty in {"easy", "medium", "hard"} else None,
+        count=count,
+    )
+
+    data = [q.to_client_dict(shuffle_options=True) for q in questions]
+    return success_response(data=data, message=f"Retrieved {len(data)} sample questions.")
+
+
+@api_bp.route("/questions/<int:question_id>")
+def api_get_question(question_id: int):
+    """Retrieve an individual question by ID."""
+    q = question_repo.get_by_id(question_id)
+    if not q or not q.is_published:
+        return error_response(message="Question not found.", status_code=404, error_code="NOT_FOUND")
+
+    # Admins get full schema including answers and explanations; players get scrubbed schema
+    if current_user.is_authenticated and getattr(current_user, "is_admin", False):
+        return success_response(data=q.to_admin_dict())
+    return success_response(data=q.to_client_dict(shuffle_options=False))
+
+
+@api_bp.route("/questions")
+@api_admin_required
+def api_admin_search_questions():
+    """Administrative search and pagination over the full question bank."""
+    search = request.args.get("q", "")
+    category_id = request.args.get("category_id", type=int)
+    difficulty = request.args.get("difficulty", "")
+    page = request.args.get("page", 1, type=int)
+
+    pagination = question_repo.search_questions(
+        query_text=search if search else None,
+        category_id=category_id,
+        difficulty=difficulty if difficulty else None,
+        page=page,
+        per_page=20,
+    )
+
+    items = [q.to_admin_dict() for q in pagination.get("items", [])]
+    return success_response(
+        data=items,
+        meta={
+            "page": pagination.get("page", 1),
+            "pages": pagination.get("pages", 1),
+            "total": pagination.get("total", 0),
+        },
+    )
+
+
+
 
