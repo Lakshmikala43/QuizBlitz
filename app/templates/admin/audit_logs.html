@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}Immutable Audit Trail — Admin | Quiz Royale{% endblock %}
+
+{% block content %}
+<div style="max-width: 1100px; margin: 2rem auto;">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+    <div>
+      <div style="font-size: 0.85rem; color: var(--accent-coral); font-weight: 700; text-transform: uppercase;">Compliance & Accountability</div>
+      <h1 style="font-size: 2.25rem; font-weight: 800;">Administrative Audit Logs</h1>
+    </div>
+
+    <div style="display: flex; gap: 0.75rem;">
+      <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline btn-sm">&larr; Admin Center</a>
+    </div>
+  </div>
+
+  <!-- Filter Entity Tabs -->
+  <div style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--color-border); padding-bottom: 0.75rem; flex-wrap: wrap;">
+    <a href="{{ url_for('admin.view_audit_logs', entity='all') }}" class="btn btn-sm {% if entity_filter == 'all' %}btn-primary{% else %}btn-outline{% endif %}">
+      All Operations
+    </a>
+    <a href="{{ url_for('admin.view_audit_logs', entity='question') }}" class="btn btn-sm {% if entity_filter == 'question' %}btn-primary{% else %}btn-outline{% endif %}">
+      Questions
+    </a>
+    <a href="{{ url_for('admin.view_audit_logs', entity='category') }}" class="btn btn-sm {% if entity_filter == 'category' %}btn-primary{% else %}btn-outline{% endif %}">
+      Categories
+    </a>
+    <a href="{{ url_for('admin.view_audit_logs', entity='user') }}" class="btn btn-sm {% if entity_filter == 'user' %}btn-primary{% else %}btn-outline{% endif %}">
+      Users
+    </a>
+    <a href="{{ url_for('admin.view_audit_logs', entity='report') }}" class="btn btn-sm {% if entity_filter == 'report' %}btn-primary{% else %}btn-outline{% endif %}">
+      Moderation
+    </a>
+  </div>
+
+  <!-- Audit Table Card -->
+  <div class="card">
+    {% if logs %}
+      <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem;">
+          <thead>
+            <tr style="border-bottom: 1px solid var(--color-border); color: var(--text-muted);">
+              <th style="padding: 0.75rem 1rem;">ID</th>
+              <th style="padding: 0.75rem 1rem;">Timestamp</th>
+              <th style="padding: 0.75rem 1rem;">Operator</th>
+              <th style="padding: 0.75rem 1rem;">Action</th>
+              <th style="padding: 0.75rem 1rem;">Entity</th>
+              <th style="padding: 0.75rem 1rem;">Payload Details</th>
+              <th style="padding: 0.75rem 1rem;">Origin IP</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for log in logs %}
+              {% set details = log.get_details() %}
+              <tr style="border-bottom: 1px solid var(--color-border); vertical-align: top;">
+                <td style="padding: 0.75rem 1rem; color: var(--text-muted); font-family: var(--font-mono); font-size: 0.8rem;">#{{ log.id }}</td>
+                <td style="padding: 0.75rem 1rem; font-size: 0.8rem; color: var(--text-muted); white-space: nowrap;">
+                  {{ log.created_at.strftime('%Y-%m-%d %H:%M:%S') if log.created_at else '' }}
+                </td>
+                <td style="padding: 0.75rem 1rem;">
+                  <span style="font-weight: 600; color: var(--accent-gold);">
+                    @{{ log.user.username if log.user else 'System' }}
+                  </span>
+                </td>
+                <td style="padding: 0.75rem 1rem;">
+                  <span style="display: inline-block; padding: 0.15rem 0.45rem; border-radius: 4px; font-size: 0.75rem; font-family: var(--font-mono); font-weight: 700; background: rgba(99, 102, 241, 0.15); color: var(--accent-purple);">
+                    {{ log.action_type }}
+                  </span>
+                </td>
+                <td style="padding: 0.75rem 1rem; font-size: 0.85rem;">
+                  <span style="text-transform: capitalize; color: var(--text-primary);">{{ log.target_entity }}</span>
+                  {% if log.target_id %}
+                    <span style="color: var(--text-muted); font-family: var(--font-mono); font-size: 0.8rem;">#{{ log.target_id }}</span>
+                  {% endif %}
+                </td>
+                <td style="padding: 0.75rem 1rem; font-size: 0.8rem;">
+                  {% if details %}
+                    <div style="font-family: var(--font-mono); background: var(--bg-surface-elevated); padding: 0.35rem 0.5rem; border-radius: 4px; border: 1px solid var(--color-border); max-width: 320px; overflow-x: auto; white-space: pre-wrap; word-break: break-all;">
+                      {% for k, v in details.items() %}
+                        <span style="color: var(--accent-gold);">{{ k }}</span>: <span style="color: var(--text-secondary);">{{ v }}</span>{% if not loop.last %}, {% endif %}
+                      {% endfor %}
+                    </div>
+                  {% else %}
+                    <span style="color: var(--text-muted);">&mdash;</span>
+                  {% endif %}
+                </td>
+                <td style="padding: 0.75rem 1rem; font-size: 0.8rem; font-family: var(--font-mono); color: var(--text-muted);">
+                  {{ log.ip_address or 'Local' }}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      {% if pagination.pages > 1 %}
+        <div style="display: flex; justify-content: center; gap: 0.5rem; padding: 1.5rem; border-top: 1px solid var(--color-border);">
+          {% if pagination.has_prev %}
+            <a href="{{ url_for('admin.view_audit_logs', page=pagination.page-1, entity=entity_filter) }}" class="btn btn-outline btn-sm">&larr; Previous</a>
+          {% endif %}
+          <span style="padding: 0.35rem 0.75rem; font-size: 0.9rem; color: var(--text-muted);">
+            Page {{ pagination.page }} of {{ pagination.pages }} ({{ pagination.total }} records)
+          </span>
+          {% if pagination.has_next %}
+            <a href="{{ url_for('admin.view_audit_logs', page=pagination.page+1, entity=entity_filter) }}" class="btn btn-outline btn-sm">Next &rarr;</a>
+          {% endif %}
+        </div>
+      {% endif %}
+
+    {% else %}
+      <div style="text-align: center; padding: 3rem 1rem;">
+        <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">📜</div>
+        <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.25rem;">No audit records found</h3>
+        <p style="color: var(--text-muted); font-size: 0.9rem;">No recorded operations match the entity filter "{{ entity_filter }}".</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
