@@ -27,10 +27,13 @@ def app():
         "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:",
         "WTF_CSRF_ENABLED": False,
         "SECRET_KEY": "test-secret-key-12345",
+        "SQLALCHEMY_SESSION_OPTIONS": {"expire_on_commit": False},
     })
 
     with application.app_context():
+        db.session.expire_on_commit = False
         db.create_all()
+
 
         # Seed standard roles
         for r_name in ["admin", "moderator", "player"]:
@@ -89,6 +92,8 @@ def test_user(app):
         stats = PlayerStatistics(user_id=user.id, coins=100, total_xp=50, level=1)
         db.session.add(stats)
         db.session.commit()
+        _ = user.id, user.username, user.email, user.display_name, user.is_active, user.is_admin
+        db.session.expunge(user)
         return user
 
 
@@ -111,7 +116,10 @@ def test_admin(app):
         stats = PlayerStatistics(user_id=admin.id, coins=500, total_xp=1000, level=5)
         db.session.add(stats)
         db.session.commit()
+        _ = admin.id, admin.username, admin.email, admin.display_name, admin.is_active, admin.is_admin
+        db.session.expunge(admin)
         return admin
+
 
 
 @pytest.fixture

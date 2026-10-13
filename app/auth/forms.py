@@ -1,9 +1,11 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, BooleanField, SubmitField
-from wtforms.validators import DataRequired, Email, Length, EqualTo, ValidationError
+from wtforms.validators import DataRequired, Length, EqualTo, ValidationError, Regexp
 from app.repositories.user_repo import UserRepository
 
 user_repo = UserRepository()
+EMAIL_REGEX = r"^[^@\s]+@[^@\s]+\.[^@\s]+$"
+
 
 
 class LoginForm(FlaskForm):
@@ -36,9 +38,10 @@ class RegisterForm(FlaskForm):
     )
     email = StringField(
         "Email Address",
-        validators=[DataRequired(), Email(message="Please enter a valid email address.")],
+        validators=[DataRequired(), Regexp(EMAIL_REGEX, message="Please enter a valid email address.")],
         render_kw={"placeholder": "you@example.com", "autocomplete": "email"},
     )
+
     display_name = StringField(
         "Display Name (Optional)",
         validators=[Length(max=30)],
@@ -76,10 +79,11 @@ class ForgotPasswordForm(FlaskForm):
 
     email = StringField(
         "Registered Email Address",
-        validators=[DataRequired(), Email()],
+        validators=[DataRequired(), Regexp(EMAIL_REGEX, message="Please enter a valid email address.")],
         render_kw={"placeholder": "Enter your registered email"},
     )
     submit = SubmitField("Generate Recovery Link")
+
 
 
 class ResetPasswordForm(FlaskForm):
