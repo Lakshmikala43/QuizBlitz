@@ -541,6 +541,103 @@ def api_get_multiplayer_room(room_code: str):
     return success_response(data=room_data)
 
 
+# --- Administrative APIs ---
+from app.models.user import User
+from app.models.category import Category
+from app.models.session import MatchResult
+from app.models.moderation import Report, AuditLog
+
+
+@api_bp.route("/admin/overview")
+@api_admin_required
+def api_admin_overview():
+    """Retrieve high-level operational metrics and health overview."""
+    total_users = db.session.query(func.count(User.id)).scalar() or 0
+    active_users = db.session.query(func.count(User.id)).filter_by(is_active=True).scalar() or 0
+    total_questions = db.session.query(func.count(Question.id)).scalar() or 0
+    published_questions = db.session.query(func.count(Question.id)).filter_by(is_published=True).scalar() or 0
+    total_categories = db.session.query(func.count(Category.id)).scalar() or 0
+    total_matches = db.session.query(func.count(MatchResult.id)).scalar() or 0
+    pending_reports = db.session.query(func.count(Report.id)).filter_by(status="pending").scalar() or 0
+
+    return success_response(
+        data={
+            "metrics": {
+                "total_users": total_users,
+                "active_users": active_users,
+                "total_questions": total_questions,
+                "published_questions": published_questions,
+                "total_categories": total_categories,
+                "total_matches": total_matches,
+                "pending_reports": pending_reports,
+            }
+        },
+        message="Admin overview metrics retrieved.",
+    )
+
+
+@api_bp.route("/admin/users")
+@api_admin_required
+def api_admin_list_users():
+    """Paginated user directory search for administrator."""
+    query_text = request.args.get("q", "").strip()
+    status_filter = request.args.get("status", "all").strip().lower()
+    page = request.args.get("page", 1, type=int)
+
+    is_active = None
+    if status_filter == "active":
+        is_active = True
+    elif status_filter == "suspended":
+        is_active = False
+
+    pagination = user_repo.search_users(
+        query_text=query_text if query_text else None,
+        is_active=is_active,
+        page=page,
+        per_page=20,
+    )
+
+    items = [u.to_dict() for u in pagination.get("items", [])]
+    return success_response(
+        data=items,
+        meta={
+            "page": pagination.get("page", 1),
+            "pages": pagination.get("pages", 1),
+            "total": pagination.get("total", 0),
+        },
+    )
+
+
+@api_bp.route("/admin/audit-logs")
+@api_admin_required
+def api_admin_audit_logs():
+    """Paginated immutable audit log events."""
+    entity_filter = request.args.get("entity", "").strip().lower()
+    page = request.args.get("page", 1, type=int)
+    per_page = 25
+
+    q = db.session.query(AuditLog)
+    if entity_filter and entity_filter != "all":
+        q = q.filter(AuditLog.target_entity == entity_filter)
+
+    q = q.order_by(AuditLog.created_at.desc())
+    total = q.count()
+    offset = max(0, (page - 1) * per_page)
+    logs = q.limit(per_page).offset(offset).all()
+    pages = max(1, (total + per_page - 1) // per_page)
+
+    items = [l.to_dict() for l in logs]
+    return success_response(
+        data=items,
+        meta={
+            "page": page,
+            "pages": pages,
+            "total": total,
+        },
+    )
+
+
+
 
 
 
