@@ -40,15 +40,18 @@ class PlayerStatistics(db.Model):
 
     @property
     def accuracy_percentage(self) -> float:
-        if self.total_answered == 0:
+        if not self.total_answered or self.total_answered == 0:
             return 0.0
-        return round((self.total_correct / self.total_answered) * 100.0, 1)
+        total_correct = self.total_correct or 0
+        return round((total_correct / self.total_answered) * 100.0, 1)
 
     @property
     def win_rate_percentage(self) -> float:
-        if self.total_matches == 0:
+        if not self.total_matches or self.total_matches == 0:
             return 0.0
-        return round((self.wins / self.total_matches) * 100.0, 1)
+        wins = self.wins or 0
+        return round((wins / self.total_matches) * 100.0, 1)
+
 
     @staticmethod
     def calculate_level_from_xp(xp: int) -> int:
