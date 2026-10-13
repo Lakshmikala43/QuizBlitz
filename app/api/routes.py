@@ -263,5 +263,95 @@ def api_admin_search_questions():
     )
 
 
+# --- Gameplay APIs ---
+from app.games.services import QuizSessionService
+from app.repositories import GameRepository
+
+game_repo = GameRepository()
+
+
+@api_bp.route("/games/start", methods=["POST"])
+@api_auth_required
+def api_start_game():
+    """Initialize a new single-player or practice game session."""
+    data = request.get_json(silent=True) or request.form.to_dict()
+    category_slug = data.get("category", "all")
+    difficulty = data.get("difficulty", "mixed")
+    question_count = int(data.get("question_count", 10))
+    game_mode = data.get("game_mode", "solo")
+
+    success, message, session = QuizSessionService.start_session(
+        user_id=current_user.id,
+        category_slug=category_slug,
+        difficulty=difficulty,
+        question_count=question_count,
+        game_mode=game_mode,
+    )
+
+    if not success or not session:
+        return error_response(message=message, status_code=400, error_code="SESSION_INIT_FAILED")
+
+    return success_response(
+        data=session.to_dict(),
+        message="Session started successfully.",
+        status_code=201,
+    )
+
+
+@api_bp.route("/games/<session_id>/question")
+@api_auth_required
+def api_get_game_question(session_id: str):
+    """Retrieve the current active question for a game session."""
+    success, message, payload = QuizSessionService.get_current_question_payload(
+        session_id=session_id,
+        user_id=current_user.id,
+    )
+
+    if not success:
+        return error_response(message=message, status_code=400, error_code="QUESTION_FETCH_FAILED")
+
+    return success_response(data=payload)
+
+
+@api_bp.route("/games/<session_id>/submit", methods=["POST"])
+@api_auth_required
+def api_submit_answer(session_id: str):
+    """Submit player's answer to the current session question."""
+    data = request.get_json(silent=True) or request.form.to_dict()
+    question_id = int(data.get("question_id", 0))
+    selected_option_id = data.get("selected_option_id")
+    if selected_option_id is not None:
+        selected_option_id = int(selected_option_id)
+    idempotency_key = data.get("idempotency_key")
+
+    success, message, result = QuizSessionService.submit_answer(
+        session_id=session_id,
+        user_id=current_user.id,
+        question_id=question_id,
+        selected_option_id=selected_option_id,
+        idempotency_key=idempotency_key,
+    )
+
+    if not success:
+        return error_response(message=message, status_code=400, error_code="SUBMISSION_FAILED")
+
+    return success_response(data=result, message=message)
+
+
+@api_bp.route("/games/<session_id>/summary")
+@api_auth_required
+def api_get_game_summary(session_id: str):
+    """Retrieve match performance summary and earned awards."""
+    session = game_repo.get_by_id(session_id)
+    if not session or session.user_id != current_user.id:
+        return error_response(message="Session not found.", status_code=404, error_code="NOT_FOUND")
+
+    summary = session.to_dict()
+    summary["match_result"] = session.match_result.to_dict() if session.match_result else None
+    return success_response(data=summary)
+
+
+
+
 
 
