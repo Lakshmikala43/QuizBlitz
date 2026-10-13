@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}Bulk Question Ingestion — Admin | Quiz Royale{% endblock %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 2rem auto;">
+  <div class="card-glass">
+    <div class="card-header">
+      <div>
+        <div style="font-size: 0.85rem; color: var(--accent-coral); font-weight: 700; text-transform: uppercase;">Batch Operations</div>
+        <h1 class="card-title">Bulk Import Questions</h1>
+      </div>
+      <a href="{{ url_for('admin.list_questions') }}" class="btn btn-outline btn-sm">&larr; Back to Questions</a>
+    </div>
+
+    <p style="color: var(--text-secondary); margin-bottom: 2rem; font-size: 0.95rem;">
+      Upload a <code>.json</code> or <code>.csv</code> file containing multiple question entries. Duplicate questions will be automatically detected and safely skipped.
+    </p>
+
+    <!-- Upload Form -->
+    <form method="POST" action="{{ url_for('admin.bulk_import') }}" enctype="multipart/form-data" style="margin-bottom: 2.5rem;">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <div class="form-group" style="border: 2px dashed var(--color-border); padding: 2rem; border-radius: var(--radius-md); text-align: center; background-color: var(--bg-surface);">
+        <input type="file" id="import_file" name="import_file" accept=".json,.csv" required style="margin-bottom: 1rem; color: var(--text-secondary);">
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0;">Supported formats: JSON Array or CSV</p>
+      </div>
+
+      <button type="submit" class="btn btn-gold btn-block btn-lg">
+        📦 Validate & Ingest Questions
+      </button>
+    </form>
+
+    <!-- Schema Format Specifications -->
+    <h2 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 1rem;">Format Specifications</h2>
+
+    <!-- JSON Format Guide -->
+    <div style="background-color: var(--bg-surface); padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--color-border); margin-bottom: 1.5rem;">
+      <strong style="color: var(--accent-gold); display: block; margin-bottom: 0.5rem;">JSON Format Example (.json):</strong>
+      <pre style="background: var(--bg-primary); padding: 1rem; border-radius: var(--radius-sm); font-size: 0.85rem; color: var(--accent-purple); overflow-x: auto;"><code>[
+  {
+    "category_slug": "python",
+    "difficulty": "medium",
+    "question_text": "What does GIL stand for in CPython?",
+    "points": 200,
+    "time_limit_sec": 15,
+    "explanation": "Global Interpreter Lock protects internal reference count memory.",
+    "options": [
+      {"text": "Global Interpreter Lock", "is_correct": true},
+      {"text": "General Interface Loop", "is_correct": false},
+      {"text": "Global Instruction Log", "is_correct": false},
+      {"text": "Generic Iterator Layer", "is_correct": false}
+    ]
+  }
+]</code></pre>
+    </div>
+
+    <!-- CSV Format Guide -->
+    <div style="background-color: var(--bg-surface); padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--color-border);">
+      <strong style="color: var(--color-success); display: block; margin-bottom: 0.5rem;">CSV Format Example (.csv):</strong>
+      <pre style="background: var(--bg-primary); padding: 1rem; border-radius: var(--radius-sm); font-size: 0.85rem; color: #34d399; overflow-x: auto;"><code>category_slug,difficulty,question_text,points,time_limit_sec,explanation,option_a,option_b,option_c,option_d,correct
+python,easy,What is bool([])?,100,15,Empty lists evaluate to False,False,True,None,Error,A</code></pre>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
