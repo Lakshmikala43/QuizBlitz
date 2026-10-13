@@ -60,9 +60,10 @@ def register():
     return render_template("auth/register.html", form=form)
 
 
-@auth_bp.route("/logout")
+@auth_bp.route("/logout", methods=["GET", "POST"])
 @login_required
 def logout():
+
     """User logout view."""
     logout_user()
     flash("You have been signed out. Until next time!", "info")
