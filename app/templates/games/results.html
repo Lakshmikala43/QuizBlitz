@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}Match Results & Analytics — Quiz Royale{% endblock %}
+
+{% block content %}
+<div style="max-width: 680px; margin: 2rem auto;">
+  <div class="card-glass" style="text-align: center; position: relative; overflow: hidden;">
+
+    <!-- Crown & Trophy Icon -->
+    <div style="margin-bottom: 1rem;">
+      <span style="font-size: 3.5rem;">🏆</span>
+    </div>
+
+    <h1 style="font-size: 2.25rem; font-weight: 900; letter-spacing: -0.02em;">Match Complete!</h1>
+    <p style="color: var(--text-secondary); margin-top: 0.25rem;">
+      {{ session.game_mode|capitalize }} Mode &bull; {{ session.category.name if session.category else "All Categories" }}
+    </p>
+
+    <!-- Score Highlight Card -->
+    <div style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(139, 92, 246, 0.15)); border: 1px solid var(--accent-gold); border-radius: var(--radius-lg); padding: 1.75rem; margin: 2rem 0; box-shadow: var(--shadow-gold-glow);">
+      <span style="font-size: 0.85rem; font-weight: 700; color: var(--accent-gold); letter-spacing: 0.1em; text-transform: uppercase;">Final Score</span>
+      <div style="font-size: 3.5rem; font-weight: 900; color: #ffffff; line-height: 1.1; margin: 0.5rem 0;">
+        {{ session.current_score }}
+      </div>
+      <span style="font-size: 0.95rem; color: var(--text-secondary);">PTS EARNED</span>
+    </div>
+
+    <!-- Rewards Pills -->
+    <div style="display: flex; justify-content: center; gap: 1.5rem; margin-bottom: 2rem; flex-wrap: wrap;">
+      <div style="background-color: var(--accent-deep-purple); border: 1px solid var(--accent-purple); padding: 0.6rem 1.25rem; border-radius: var(--radius-full); font-weight: 700; color: var(--accent-purple); display: flex; align-items: center; gap: 0.5rem;">
+        <span>⚡ +{{ result.xp_earned if result else (session.current_score * 0.2)|round|int }} XP</span>
+      </div>
+      <div style="background-color: rgba(245, 158, 11, 0.15); border: 1px solid var(--accent-gold); padding: 0.6rem 1.25rem; border-radius: var(--radius-full); font-weight: 700; color: var(--accent-gold); display: flex; align-items: center; gap: 0.5rem;">
+        <span>🪙 +{{ result.coins_earned if result else 10 }} Gold Coins</span>
+      </div>
+    </div>
+
+    <!-- Analytics Breakdown Grid -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 1rem; margin-bottom: 2.5rem; text-align: center;">
+      <div class="card" style="padding: 1rem;">
+        <span style="font-size: 0.8rem; color: var(--text-muted); display: block;">ACCURACY</span>
+        <strong style="font-size: 1.35rem; color: var(--color-success);">
+          {{ result.accuracy_pct|round(1) if result else 0 }}%
+        </strong>
+      </div>
+      <div class="card" style="padding: 1rem;">
+        <span style="font-size: 0.8rem; color: var(--text-muted); display: block;">CORRECT</span>
+        <strong style="font-size: 1.35rem; color: var(--text-primary);">
+          {{ result.correct_answers if result else 0 }} / {{ session.total_questions }}
+        </strong>
+      </div>
+      <div class="card" style="padding: 1rem;">
+        <span style="font-size: 0.8rem; color: var(--text-muted); display: block;">BEST STREAK</span>
+        <strong style="font-size: 1.35rem; color: var(--accent-coral);">
+          {{ session.best_streak }}x
+        </strong>
+      </div>
+      <div class="card" style="padding: 1rem;">
+        <span style="font-size: 0.8rem; color: var(--text-muted); display: block;">TOTAL TIME</span>
+        <strong style="font-size: 1.35rem; color: var(--text-secondary);">
+          {{ (result.total_time_ms / 1000)|round(1) if result else 0 }}s
+        </strong>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+      <a href="{{ url_for('games.review_view', session_id=session.id) }}" class="btn btn-outline btn-lg">
+        Review Answers & Explanations
+      </a>
+      <a href="{{ url_for('games.setup_match', category=session.category.slug if session.category else 'all') }}" class="btn btn-gold btn-lg">
+        Play Again
+      </a>
+      <a href="{{ url_for('players.dashboard') }}" class="btn btn-outline btn-lg">
+        Dashboard
+      </a>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
