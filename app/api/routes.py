@@ -36,3 +36,114 @@ def system_status():
         },
         message="Platform telemetry nominal",
     )
+
+
+# --- Authentication & Session APIs ---
+from flask import request
+from flask_login import login_user, logout_user, current_user
+from app.api import error_response, api_auth_required
+from app.auth.services import AuthService
+from app.security import rate_limit
+
+
+@api_bp.route("/auth/register", methods=["POST"])
+@rate_limit(requests=20, window_sec=60, bucket="api_auth_register")
+def api_register():
+    """Register a new player account."""
+    data = request.get_json(silent=True) or request.form.to_dict()
+    username = data.get("username", "")
+    email = data.get("email", "")
+    password = data.get("password", "")
+    display_name = data.get("display_name", "")
+
+    if not username or not email or not password:
+        return error_response(
+            message="Username, email, and password are required fields.",
+            status_code=422,
+            error_code="VALIDATION_ERROR",
+        )
+
+    success, msg, user = AuthService.register_user(
+        username=username,
+        email=email,
+        password=password,
+        display_name=display_name,
+    )
+
+    if not success or not user:
+        return error_response(message=msg, status_code=400, error_code="REGISTRATION_FAILED")
+
+    # Automatically establish session
+    login_user(user)
+
+    return success_response(
+        data={
+            "user": user.to_dict(),
+        },
+        message="Account registered successfully.",
+        status_code=201,
+    )
+
+
+@api_bp.route("/auth/login", methods=["POST"])
+@rate_limit(requests=30, window_sec=60, bucket="api_auth_login")
+def api_login():
+    """Authenticate player credentials and initiate session."""
+    data = request.get_json(silent=True) or request.form.to_dict()
+    identifier = data.get("login_identifier") or data.get("username") or data.get("email") or ""
+    password = data.get("password", "")
+    remember = bool(data.get("remember", False))
+
+    if not identifier or not password:
+        return error_response(
+            message="Login identifier and password are required.",
+            status_code=422,
+            error_code="VALIDATION_ERROR",
+        )
+
+    success, msg, user = AuthService.authenticate_user(
+        username_or_email=identifier,
+        password=password,
+    )
+
+    if not success or not user:
+        return error_response(message=msg, status_code=401, error_code="INVALID_CREDENTIALS")
+
+    login_user(user, remember=remember)
+
+    return success_response(
+        data={
+            "user": user.to_dict(),
+        },
+        message="Authentication successful.",
+    )
+
+
+@api_bp.route("/auth/logout", methods=["POST"])
+@api_auth_required
+def api_logout():
+    """Terminate the active player session."""
+    logout_user()
+    return success_response(message="Logged out successfully.")
+
+
+@api_bp.route("/auth/me")
+@api_auth_required
+def api_current_user():
+    """Retrieve profile and stats of the currently authenticated player."""
+    user_dict = current_user.to_dict()
+    stats = current_user.statistics
+    user_dict["stats"] = {
+        "level": stats.level if stats else 1,
+        "xp": stats.total_xp if stats else 0,
+        "coins": stats.coins if stats else 0,
+        "daily_streak": stats.daily_streak if stats else 0,
+        "highest_streak": stats.highest_streak if stats else 0,
+        "total_matches": stats.total_matches if stats else 0,
+        "wins": stats.wins if stats else 0,
+        "win_rate": stats.win_rate_percentage if stats else 0.0,
+        "accuracy": stats.accuracy_percentage if stats else 0.0,
+    }
+    return success_response(data={"user": user_dict})
+
+
