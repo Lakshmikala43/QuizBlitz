@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+
+{% block title %}Player Dashboard — Quiz Royale{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 2rem;">
+
+  <!-- Hero Profile Banner -->
+  <div class="card-glass" style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1.5rem; position: relative; overflow: hidden;">
+    <div style="display: flex; align-items: center; gap: 1.5rem;">
+      <!-- Local SVG Avatar -->
+      <div style="width: 80px; height: 80px; border-radius: var(--radius-full); background: linear-gradient(135deg, var(--accent-purple), var(--accent-gold)); display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 800; color: #fff; box-shadow: var(--shadow-glow);">
+        {{ current_user.effective_display_name[:2].upper() }}
+      </div>
+
+      <div>
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <h1 style="font-size: 1.75rem; font-weight: 800; letter-spacing: -0.02em;">{{ current_user.effective_display_name }}</h1>
+          <span style="font-size: 0.85rem; color: var(--text-muted);">@{{ current_user.username }}</span>
+        </div>
+        <p style="color: var(--text-secondary); font-size: 0.95rem; margin-top: 0.25rem;">{{ current_user.bio or "Ready for battle. May intellect prevail!" }}</p>
+
+        <!-- Level & XP Progress Bar -->
+        <div style="margin-top: 0.75rem; max-width: 320px;">
+          <div style="display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 600; margin-bottom: 0.25rem;">
+            <span style="color: var(--accent-purple);">Level {{ summary.stats.level }}</span>
+            <span style="color: var(--text-muted);">{{ summary.stats.xp_progress_in_current_level }} / {{ summary.stats.xp_needed_to_advance }} XP</span>
+          </div>
+          <div style="width: 100%; height: 8px; background-color: var(--bg-surface-elevated); border-radius: var(--radius-full); overflow: hidden;">
+            {% set pct = (summary.stats.xp_progress_in_current_level / summary.stats.xp_needed_to_advance * 100)|round|int %}
+            <div style="width: {{ [pct, 100]|min }}%; height: 100%; background: linear-gradient(90deg, var(--accent-purple), var(--accent-gold)); border-radius: var(--radius-full);"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Stats Pills -->
+    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+      <div style="background-color: var(--bg-surface); border: 1px solid var(--color-border); padding: 0.75rem 1.25rem; border-radius: var(--radius-md); text-align: center;">
+        <span style="font-size: 0.8rem; color: var(--text-muted); display: block;">GLOBAL RANK</span>
+        <strong style="font-size: 1.4rem; color: var(--accent-gold);">#{{ summary.rank }}</strong>
+      </div>
+      <div style="background-color: var(--bg-surface); border: 1px solid var(--color-border); padding: 0.75rem 1.25rem; border-radius: var(--radius-md); text-align: center;">
+        <span style="font-size: 0.8rem; color: var(--text-muted); display: block;">GOLD COINS</span>
+        <strong style="font-size: 1.4rem; color: var(--accent-amber);">🪙 {{ summary.stats.coins }}</strong>
+      </div>
+      <div style="background-color: var(--bg-surface); border: 1px solid var(--color-border); padding: 0.75rem 1.25rem; border-radius: var(--radius-md); text-align: center;">
+        <span style="font-size: 0.8rem; color: var(--text-muted); display: block;">DAILY STREAK</span>
+        <strong style="font-size: 1.4rem; color: var(--accent-coral);">🔥 {{ summary.stats.daily_streak }}d</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- Battle Mode Launchers -->
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.25rem;">
+    <a href="{{ url_for('games.setup_match', mode='solo') }}" class="card" style="display: flex; align-items: center; gap: 1rem; text-decoration: none; border-color: rgba(139, 92, 246, 0.4); transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+      <div style="font-size: 2.2rem;">🎯</div>
+      <div>
+        <strong style="color: var(--text-primary); font-size: 1.1rem; display: block;">Solo Challenge</strong>
+        <span style="color: var(--text-secondary); font-size: 0.85rem;">Ranked solo quiz with streak multipliers</span>
+      </div>
+    </a>
+
+    <a href="{{ url_for('games.daily_challenge_view') }}" class="card" style="display: flex; align-items: center; gap: 1rem; text-decoration: none; border-color: rgba(245, 158, 11, 0.4); transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+      <div style="font-size: 2.2rem;">📅</div>
+      <div>
+        <strong style="color: var(--accent-gold); font-size: 1.1rem; display: block;">Daily Challenge</strong>
+        <span style="color: var(--text-secondary); font-size: 0.85rem;">One ranked attempt per day for bonus rewards</span>
+      </div>
+    </a>
+
+    <a href="{{ url_for('multiplayer.lobby') }}" class="card" style="display: flex; align-items: center; gap: 1rem; text-decoration: none; border-color: rgba(244, 63, 94, 0.4); transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+      <div style="font-size: 2.2rem;">⚔️</div>
+      <div>
+        <strong style="color: var(--accent-coral); font-size: 1.1rem; display: block;">Multiplayer Arena</strong>
+        <span style="color: var(--text-secondary); font-size: 0.85rem;">Live synchronized battle with room codes</span>
+      </div>
+    </a>
+
+    <a href="{{ url_for('games.setup_match', mode='survival') }}" class="card" style="display: flex; align-items: center; gap: 1rem; text-decoration: none; border-color: rgba(16, 185, 129, 0.4); transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+      <div style="font-size: 2.2rem;">🛡️</div>
+      <div>
+        <strong style="color: var(--color-success); font-size: 1.1rem; display: block;">Survival Mode</strong>
+        <span style="color: var(--text-secondary); font-size: 0.85rem;">3 lives. Endure as many rounds as you can</span>
+      </div>
+    </a>
+  </div>
+
+  <!-- Combat Metrics Grid -->
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem;">
+    <div class="card" style="text-align: center;">
+      <span style="font-size: 0.85rem; color: var(--text-muted); display: block;">ACCURACY</span>
+      <span style="font-size: 1.5rem; font-weight: 700; color: var(--color-success);">{{ summary.stats.accuracy_percentage }}%</span>
+    </div>
+    <div class="card" style="text-align: center;">
+      <span style="font-size: 0.85rem; color: var(--text-muted); display: block;">MATCHES PLAYED</span>
+      <span style="font-size: 1.5rem; font-weight: 700;">{{ summary.stats.total_matches }}</span>
+    </div>
+    <div class="card" style="text-align: center;">
+      <span style="font-size: 0.85rem; color: var(--text-muted); display: block;">VICTORIES</span>
+      <span style="font-size: 1.5rem; font-weight: 700; color: var(--accent-gold);">{{ summary.stats.wins }}</span>
+    </div>
+    <div class="card" style="text-align: center;">
+      <span style="font-size: 0.85rem; color: var(--text-muted); display: block;">HIGHEST SCORE</span>
+      <span style="font-size: 1.5rem; font-weight: 700; color: var(--accent-purple);">{{ summary.stats.highest_score }}</span>
+    </div>
+    <div class="card" style="text-align: center;">
+      <span style="font-size: 0.85rem; color: var(--text-muted); display: block;">BEST STREAK</span>
+      <span style="font-size: 1.5rem; font-weight: 700; color: var(--accent-coral);">{{ summary.stats.highest_streak }}x</span>
+    </div>
+    <div class="card" style="text-align: center;">
+      <span style="font-size: 0.85rem; color: var(--text-muted); display: block;">BADGES WON</span>
+      <span style="font-size: 1.5rem; font-weight: 700; color: var(--accent-amber);">{{ summary.unlocked_achievements_count }}</span>
+    </div>
+  </div>
+
+  <!-- Featured Categories -->
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">Select Category</h2>
+      <a href="{{ url_for('categories.list_categories') }}" style="font-size: 0.9rem;">View All 14 Categories &rarr;</a>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem;">
+      {% for cat in categories %}
+        <a href="{{ url_for('games.setup_match', category=cat.slug) }}" style="background-color: var(--bg-surface-elevated); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 1rem; text-decoration: none; color: inherit; transition: border-color 0.2s;" onmouseover="this.style.borderColor='{{ cat.color_hex }}'" onmouseout="this.style.borderColor='var(--color-border)'">
+          <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.4rem;">
+            <span style="width: 10px; height: 10px; border-radius: 50%; background-color: {{ cat.color_hex }};"></span>
+            <strong style="font-size: 0.95rem;">{{ cat.name }}</strong>
+          </div>
+          <span style="font-size: 0.8rem; color: var(--text-muted);">{{ cat.question_count }} Questions</span>
+        </a>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Recent Matches History -->
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">Recent Battles</h2>
+      <a href="{{ url_for('players.history') }}" style="font-size: 0.9rem;">Full History &rarr;</a>
+    </div>
+
+    {% if summary.recent_matches %}
+      <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.95rem;">
+          <thead>
+            <tr style="border-bottom: 1px solid var(--color-border); color: var(--text-muted);">
+              <th style="padding: 0.75rem 1rem;">Mode</th>
+              <th style="padding: 0.75rem 1rem;">Category</th>
+              <th style="padding: 0.75rem 1rem;">Score</th>
+              <th style="padding: 0.75rem 1rem;">Streak</th>
+              <th style="padding: 0.75rem 1rem;">Date</th>
+              <th style="padding: 0.75rem 1rem;">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for s in summary.recent_matches %}
+              <tr style="border-bottom: 1px solid var(--color-border);">
+                <td style="padding: 0.75rem 1rem; text-transform: capitalize; font-weight: 600;">{{ s.game_mode }}</td>
+                <td style="padding: 0.75rem 1rem; color: var(--text-secondary);">{{ s.category.name if s.category else "All Categories" }}</td>
+                <td style="padding: 0.75rem 1rem; color: var(--accent-gold); font-weight: 700;">{{ s.current_score }} pts</td>
+                <td style="padding: 0.75rem 1rem; color: var(--accent-coral);">{{ s.best_streak }}x</td>
+                <td style="padding: 0.75rem 1rem; color: var(--text-muted); font-size: 0.85rem;">{{ s.completed_at.strftime('%b %d, %H:%M') if s.completed_at else 'Active' }}</td>
+                <td style="padding: 0.75rem 1rem;">
+                  <a href="{{ url_for('games.results_view', session_id=s.id) }}" class="btn btn-outline btn-sm">Review</a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div style="text-align: center; padding: 2rem; color: var(--text-muted);">
+        No completed battles recorded yet. Launch your first match above!
+      </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

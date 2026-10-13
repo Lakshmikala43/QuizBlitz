@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}Player Profile — Quiz Royale{% endblock %}
+
+{% block content %}
+<div style="max-width: 600px; margin: 2rem auto;">
+  <div class="card-glass">
+    <div class="card-header">
+      <h1 class="card-title">Warrior Profile</h1>
+      <span style="font-size: 0.85rem; color: var(--accent-gold); font-weight: 600;">Global Rank #{{ rank }}</span>
+    </div>
+
+    <!-- Avatar Preview -->
+    <div style="display: flex; align-items: center; gap: 1.5rem; margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--color-border);">
+      <div id="avatar-preview" style="width: 72px; height: 72px; border-radius: 50%; background: linear-gradient(135deg, var(--accent-purple), var(--accent-gold)); display: flex; align-items: center; justify-content: center; font-size: 1.8rem; font-weight: 800; color: #fff; box-shadow: var(--shadow-glow);">
+        {{ current_user.effective_display_name[:2].upper() }}
+      </div>
+      <div>
+        <strong style="font-size: 1.2rem; display: block;">{{ current_user.effective_display_name }}</strong>
+        <span style="color: var(--text-muted); font-size: 0.9rem;">Callsign: @{{ current_user.username }}</span>
+        <div style="margin-top: 0.25rem;">
+          <span class="pill-level">Level {{ stats.level }}</span>
+          <span style="color: var(--text-secondary); font-size: 0.85rem; margin-left: 0.5rem;">Total XP: {{ stats.total_xp }}</span>
+        </div>
+      </div>
+    </div>
+
+    <form method="POST" action="{{ url_for('players.profile') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <div class="form-group">
+        <label class="form-label" for="display_name">Display Name</label>
+        <input type="text" id="display_name" name="display_name" class="form-control" value="{{ current_user.display_name or current_user.username }}" required maxlength="30">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="avatar_seed">Avatar Theme Seed</label>
+        <input type="text" id="avatar_seed" name="avatar_seed" class="form-control" value="{{ current_user.avatar_seed }}" maxlength="30" placeholder="Custom text to seed local avatar">
+        <small style="color: var(--text-muted); font-size: 0.8rem; display: block; margin-top: 0.25rem;">
+          Avatars are deterministically generated locally without external networks.
+        </small>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 2rem;">
+        <label class="form-label" for="bio">Player Bio</label>
+        <textarea id="bio" name="bio" class="form-control" rows="3" maxlength="250" placeholder="Share your battle motto...">{{ current_user.bio or '' }}</textarea>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <button type="submit" class="btn btn-gold">Save Changes</button>
+        <a href="{{ url_for('players.settings') }}" class="btn btn-outline btn-sm">Account Settings</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
