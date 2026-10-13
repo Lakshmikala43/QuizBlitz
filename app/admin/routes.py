@@ -72,6 +72,87 @@ def dashboard():
     )
 
 
+# --- Category Management ---
+@admin_bp.route("/categories")
+@admin_required
+def list_categories():
+    """Admin categories overview."""
+    categories = db.session.query(Category).order_by(Category.sort_order.asc(), Category.name.asc()).all()
+    return render_template("admin/categories.html", categories=categories)
+
+
+@admin_bp.route("/categories/create", methods=["POST"])
+@admin_required
+def create_category():
+    """Add a new category."""
+    name = request.form.get("name", "").strip()
+    slug = request.form.get("slug", "").strip().lower()
+    description = request.form.get("description", "").strip()
+    color_hex = request.form.get("color_hex", "#6366f1").strip()
+    sort_order = request.form.get("sort_order", 0, type=int)
+
+    if not name or not slug:
+        flash("Category name and slug are required.", "danger")
+        return redirect(url_for("admin.list_categories"))
+
+    if category_repo.get_by_slug(slug):
+        flash("A category with this slug already exists.", "warning")
+        return redirect(url_for("admin.list_categories"))
+
+    cat = Category(
+        name=name,
+        slug=slug,
+        description=description,
+        color_hex=color_hex,
+        sort_order=sort_order,
+        is_active=True,
+    )
+    db.session.add(cat)
+    db.session.commit()
+    log_admin_action("create_category", "category", cat.id, {"name": name, "slug": slug})
+    flash(f"Category '{name}' created successfully!", "success")
+    return redirect(url_for("admin.list_categories"))
+
+
+@admin_bp.route("/categories/<int:cat_id>/edit", methods=["POST"])
+@admin_required
+def edit_category(cat_id):
+    """Update existing category details."""
+    cat = category_repo.get_by_id(cat_id)
+    if not cat:
+        abort(404)
+
+    name = request.form.get("name", "").strip()
+    description = request.form.get("description", "").strip()
+    color_hex = request.form.get("color_hex", "#6366f1").strip()
+    sort_order = request.form.get("sort_order", 0, type=int)
+
+    if name:
+        cat.name = name
+    cat.description = description
+    cat.color_hex = color_hex
+    cat.sort_order = sort_order
+
+    db.session.commit()
+    log_admin_action("update_category", "category", cat.id, {"name": name})
+    flash(f"Category '{cat.name}' updated.", "success")
+    return redirect(url_for("admin.list_categories"))
+
+
+@admin_bp.route("/categories/<int:cat_id>/toggle", methods=["POST"])
+@admin_required
+def toggle_category(cat_id):
+    """Toggle category active status."""
+    cat = category_repo.get_by_id(cat_id)
+    if cat:
+        cat.is_active = not cat.is_active
+        db.session.commit()
+        log_admin_action("toggle_category", "category", cat.id, {"is_active": cat.is_active})
+        flash(f"Category active state toggled to {cat.is_active}.", "info")
+    return redirect(url_for("admin.list_categories"))
+
+
+# --- Question Management ---
 @admin_bp.route("/questions")
 @admin_required
 def list_questions():
@@ -121,7 +202,6 @@ def create_question():
             for i in range(4)
         ]
 
-        # Validation
         if len(q_text) < 10:
             flash("Question text must be at least 10 characters.", "danger")
             return render_template("admin/question_edit.html", categories=categories, question=None)
@@ -130,7 +210,6 @@ def create_question():
             flash("All 4 option choices must have text.", "danger")
             return render_template("admin/question_edit.html", categories=categories, question=None)
 
-        # Duplicate check
         if question_repo.detect_duplicate_question(q_text):
             flash("An identical question already exists in the database.", "warning")
             return render_template("admin/question_edit.html", categories=categories, question=None)

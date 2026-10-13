@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Categories — Admin | Quiz Royale{% endblock %}
+
+{% block content %}
+<div style="max-width: 960px; margin: 2rem auto;">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+    <div>
+      <div style="font-size: 0.85rem; color: var(--accent-coral); font-weight: 700; text-transform: uppercase;">Taxonomy Administration</div>
+      <h1 style="font-size: 2.25rem; font-weight: 800;">Manage Disciplines</h1>
+    </div>
+
+    <div style="display: flex; gap: 0.75rem;">
+      <a href="{{ url_for('admin.list_questions') }}" class="btn btn-outline btn-sm">Questions</a>
+      <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline btn-sm">&larr; Admin Center</a>
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem;">
+
+    <!-- Categories List -->
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title" style="font-size: 1.2rem;">All Categories ({{ categories|length }})</h2>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 0.85rem;">
+        {% for c in categories %}
+          <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.85rem; border-radius: var(--radius-md); background-color: var(--bg-surface-elevated); border: 1px solid var(--color-border);">
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+              <span style="width: 14px; height: 14px; border-radius: 50%; background-color: {{ c.color_hex }};"></span>
+              <div>
+                <strong style="display: block; font-size: 0.95rem;">{{ c.name }}</strong>
+                <span style="font-size: 0.8rem; color: var(--text-muted);">slug: {{ c.slug }} &bull; {{ c.question_count }} Qs</span>
+              </div>
+            </div>
+
+            <form method="POST" action="{{ url_for('admin.toggle_category', cat_id=c.id) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn btn-sm {% if c.is_active %}btn-outline{% else %}btn-coral{% endif %}" style="font-size: 0.75rem; padding: 0.2rem 0.6rem;">
+                {{ 'Active' if c.is_active else 'Disabled' }}
+              </button>
+            </form>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Add Category Form -->
+    <div class="card-glass">
+      <h2 style="font-size: 1.2rem; font-weight: 700; margin-bottom: 1.25rem;">Add Category</h2>
+
+      <form method="POST" action="{{ url_for('admin.create_category') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="form-group">
+          <label class="form-label" for="name">Category Name</label>
+          <input type="text" id="name" name="name" class="form-control" placeholder="e.g. Artificial Intelligence" required maxlength="50">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="slug">URL Slug</label>
+          <input type="text" id="slug" name="slug" class="form-control" placeholder="e.g. artificial-intelligence" required maxlength="50">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="color_hex">Accent Color (Hex)</label>
+          <input type="text" id="color_hex" name="color_hex" class="form-control" value="#8b5cf6" required maxlength="10">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="description">Description</label>
+          <textarea id="description" name="description" class="form-control" rows="2" placeholder="Brief discipline summary..."></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-gold btn-block">
+          Create Category
+        </button>
+      </form>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
