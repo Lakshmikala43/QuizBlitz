@@ -147,3 +147,46 @@ def api_current_user():
     return success_response(data={"user": user_dict})
 
 
+# --- Categories APIs ---
+from app.repositories import CategoryRepository
+from app.models.question import Question
+from app.extensions import db
+from sqlalchemy import func
+
+category_repo = CategoryRepository()
+
+
+@api_bp.route("/categories")
+def api_list_categories():
+    """List all active quiz categories with question totals."""
+    categories = category_repo.get_active_categories()
+    data = [c.to_dict() for c in categories]
+    return success_response(data=data, message="Categories retrieved successfully.")
+
+
+@api_bp.route("/categories/<slug>")
+def api_get_category(slug: str):
+    """Retrieve detailed information and difficulty breakdown for a single category."""
+    cat = category_repo.get_by_slug(slug.strip().lower())
+    if not cat:
+        return error_response(
+            message=f"Category '{slug}' not found.",
+            status_code=404,
+            error_code="CATEGORY_NOT_FOUND",
+        )
+
+    cat_data = cat.to_dict()
+
+    # Difficulty breakdown
+    diff_counts = (
+        db.session.query(Question.difficulty, func.count(Question.id))
+        .filter(Question.category_id == cat.id, Question.is_published == True)
+        .group_by(Question.difficulty)
+        .all()
+    )
+    cat_data["difficulty_breakdown"] = {diff: count for diff, count in diff_counts}
+
+    return success_response(data=cat_data)
+
+
+
