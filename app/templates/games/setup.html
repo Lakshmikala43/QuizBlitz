@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block title %}Battle Setup — Quiz Royale{% endblock %}
+
+{% block content %}
+<div style="max-width: 640px; margin: 2rem auto;">
+  <div class="card-glass">
+    <div class="card-header">
+      <h1 class="card-title">Configure Battle</h1>
+      <span style="font-size: 0.85rem; color: var(--accent-gold); font-weight: 700;">Ranked Arena</span>
+    </div>
+
+    <form method="POST" action="{{ url_for('games.start_game') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <!-- Game Mode Selection -->
+      <div class="form-group">
+        <label class="form-label" for="game_mode">Game Mode</label>
+        <select id="game_mode" name="game_mode" class="form-control">
+          <option value="solo" {% if mode == 'solo' %}selected{% endif %}>🎯 Solo Classic (Standard Ranked)</option>
+          <option value="time_attack" {% if mode == 'time_attack' %}selected{% endif %}>⚡ Time Attack (Speed Run)</option>
+          <option value="survival" {% if mode == 'survival' %}selected{% endif %}>🛡️ Survival Mode (3 Lives)</option>
+          <option value="practice" {% if mode == 'practice' %}selected{% endif %}>📖 Practice Mode (Untimed / Casual)</option>
+        </select>
+      </div>
+
+      <!-- Category Selection -->
+      <div class="form-group">
+        <label class="form-label" for="category">Category</label>
+        <select id="category" name="category" class="form-control">
+          <option value="all" {% if selected_category == 'all' %}selected{% endif %}>🌐 All Categories (Grandmaster Mixed)</option>
+          {% for cat in categories %}
+            <option value="{{ cat.slug }}" {% if selected_category == cat.slug %}selected{% endif %}>
+              {{ cat.name }} ({{ cat.question_count }} Qs)
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Difficulty Selection -->
+      <div class="form-group">
+        <label class="form-label">Difficulty Level</label>
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem;">
+          <label style="cursor: pointer;">
+            <input type="radio" name="difficulty" value="mixed" {% if selected_difficulty == 'mixed' %}checked{% endif %} style="display: none;" onchange="updateRadioSelection(this)">
+            <div class="diff-btn {% if selected_difficulty == 'mixed' %}active{% endif %}">Mixed</div>
+          </label>
+          <label style="cursor: pointer;">
+            <input type="radio" name="difficulty" value="easy" {% if selected_difficulty == 'easy' %}checked{% endif %} style="display: none;" onchange="updateRadioSelection(this)">
+            <div class="diff-btn {% if selected_difficulty == 'easy' %}active{% endif %}">Easy</div>
+          </label>
+          <label style="cursor: pointer;">
+            <input type="radio" name="difficulty" value="medium" {% if selected_difficulty == 'medium' %}checked{% endif %} style="display: none;" onchange="updateRadioSelection(this)">
+            <div class="diff-btn {% if selected_difficulty == 'medium' %}active{% endif %}">Medium</div>
+          </label>
+          <label style="cursor: pointer;">
+            <input type="radio" name="difficulty" value="hard" {% if selected_difficulty == 'hard' %}checked{% endif %} style="display: none;" onchange="updateRadioSelection(this)">
+            <div class="diff-btn {% if selected_difficulty == 'hard' %}active{% endif %}">Hard</div>
+          </label>
+        </div>
+      </div>
+
+      <!-- Question Volume Slider -->
+      <div class="form-group" style="margin-bottom: 2rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+          <label class="form-label" for="question_count" style="margin-bottom: 0;">Question Volume</label>
+          <span id="question_count_val" style="color: var(--accent-gold); font-weight: 700;">10 Questions</span>
+        </div>
+        <input type="range" id="question_count" name="question_count" min="5" max="25" step="5" value="10" style="width: 100%; accent-color: var(--accent-gold);" oninput="document.getElementById('question_count_val').textContent = this.value + ' Questions'">
+      </div>
+
+      <button type="submit" class="btn btn-gold btn-block btn-lg">
+        ⚔️ Launch Match Now
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+  .diff-btn {
+    text-align: center;
+    padding: 0.65rem 0.5rem;
+    border-radius: var(--radius-md);
+    background-color: var(--bg-surface);
+    border: 1px solid var(--color-border);
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    transition: all 0.15s ease;
+  }
+  .diff-btn:hover {
+    border-color: var(--accent-purple);
+    color: var(--text-primary);
+  }
+  .diff-btn.active {
+    background-color: var(--accent-deep-purple);
+    border-color: var(--accent-purple);
+    color: var(--accent-gold);
+    box-shadow: 0 0 10px var(--accent-purple-glow);
+  }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function updateRadioSelection(radio) {
+    document.querySelectorAll('.diff-btn').forEach(el => el.classList.remove('active'));
+    radio.parentElement.querySelector('.diff-btn').classList.add('active');
+  }
+</script>
+{% endblock %}

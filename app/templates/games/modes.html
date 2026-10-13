@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}Battle Modes — Quiz Royale{% endblock %}
+
+{% block content %}
+<div style="max-width: 960px; margin: 2rem auto;">
+  <div style="text-align: center; margin-bottom: 3rem;">
+    <h1 style="font-size: 2.5rem; font-weight: 800;">Competitive Game Modes</h1>
+    <p style="color: var(--text-secondary); margin-top: 0.5rem; font-size: 1.1rem;">
+      Select your arena style, test your reflexes, and claim XP and rewards.
+    </p>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;">
+    <!-- Solo Classic -->
+    <div class="card-glass" style="display: flex; flex-direction: column; justify-content: space-between;">
+      <div>
+        <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🎯</div>
+        <h2 style="font-size: 1.35rem; font-weight: 700; margin-bottom: 0.5rem;">Solo Classic</h2>
+        <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5; margin-bottom: 1.5rem;">
+          Configure question volume and difficulty. Earn streak bonuses up to 1.5x and climb the global ladder.
+        </p>
+      </div>
+      <a href="{{ url_for('games.setup_match', mode='solo') }}" class="btn btn-gold btn-block">Play Solo Classic</a>
+    </div>
+
+    <!-- Time Attack -->
+    <div class="card-glass" style="display: flex; flex-direction: column; justify-content: space-between;">
+      <div>
+        <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">⚡</div>
+        <h2 style="font-size: 1.35rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--accent-amber);">Time Attack</h2>
+        <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5; margin-bottom: 1.5rem;">
+          60-second rapid-fire trial. Maximum questions answered before the master clock expires.
+        </p>
+      </div>
+      <a href="{{ url_for('games.setup_match', mode='time_attack') }}" class="btn btn-gold btn-block">Launch Time Attack</a>
+    </div>
+
+    <!-- Survival Mode -->
+    <div class="card-glass" style="display: flex; flex-direction: column; justify-content: space-between;">
+      <div>
+        <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🛡️</div>
+        <h2 style="font-size: 1.35rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--color-success);">Survival Mode</h2>
+        <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5; margin-bottom: 1.5rem;">
+          You begin with 3 lives. Every wrong answer or timeout subtracts a life. How far will your intellect take you?
+        </p>
+      </div>
+      <a href="{{ url_for('games.setup_match', mode='survival') }}" class="btn btn-gold btn-block">Enter Survival</a>
+    </div>
+
+    <!-- Daily Challenge -->
+    <div class="card-glass" style="display: flex; flex-direction: column; justify-content: space-between;">
+      <div>
+        <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">📅</div>
+        <h2 style="font-size: 1.35rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--accent-gold);">Daily Challenge</h2>
+        <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5; margin-bottom: 1.5rem;">
+          One deterministic ranked attempt per player each calendar day. Daily leaderboard rankings and bonus XP!
+        </p>
+      </div>
+      <a href="{{ url_for('games.daily_challenge_view') }}" class="btn btn-gold btn-block">View Daily Challenge</a>
+    </div>
+
+    <!-- Multiplayer Arena -->
+    <div class="card-glass" style="display: flex; flex-direction: column; justify-content: space-between;">
+      <div>
+        <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">⚔️</div>
+        <h2 style="font-size: 1.35rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--accent-coral);">Multiplayer Arena</h2>
+        <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5; margin-bottom: 1.5rem;">
+          Real-time Socket.IO room battles. Synchronized question timers and live opponent standings.
+        </p>
+      </div>
+      <a href="{{ url_for('multiplayer.lobby') }}" class="btn btn-coral btn-block">Join Multiplayer Lobby</a>
+    </div>
+
+    <!-- Practice Mode -->
+    <div class="card-glass" style="display: flex; flex-direction: column; justify-content: space-between;">
+      <div>
+        <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">📖</div>
+        <h2 style="font-size: 1.35rem; font-weight: 700; margin-bottom: 0.5rem;">Practice Mode</h2>
+        <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5; margin-bottom: 1.5rem;">
+          Untimed, unranked exploration with instant explanations after every question. Perfect for study.
+        </p>
+      </div>
+      <a href="{{ url_for('games.setup_match', mode='practice') }}" class="btn btn-outline btn-block">Practice Casual</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
