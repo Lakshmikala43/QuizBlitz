@@ -390,6 +390,84 @@ def api_get_leaderboard():
     )
 
 
+# --- Player Profiles & Achievements APIs ---
+from app.repositories import UserRepository
+from app.models.achievement import Achievement
+
+user_repo = UserRepository()
+
+
+@api_bp.route("/players/<username>")
+def api_get_player_profile(username: str):
+    """Retrieve public player card, combat stats, and unlocked trophies."""
+    user = user_repo.get_by_username(username.strip())
+    if not user or not user.is_active:
+        return error_response(
+            message=f"Player '{username}' not found.",
+            status_code=404,
+            error_code="PLAYER_NOT_FOUND",
+        )
+
+    stats = user.statistics
+    unlocked_achievements = [pa.achievement.to_dict() for pa in user.player_achievements if pa.achievement]
+
+    profile_data = {
+        "username": user.username,
+        "display_name": user.effective_display_name,
+        "avatar_seed": user.avatar_seed,
+        "bio": user.bio,
+        "is_admin": user.is_admin,
+        "member_since": user.created_at.isoformat() if user.created_at else None,
+        "stats": {
+            "level": stats.level if stats else 1,
+            "total_xp": stats.total_xp if stats else 0,
+            "coins": stats.coins if stats else 0,
+            "total_matches": stats.total_matches if stats else 0,
+            "wins": stats.wins if stats else 0,
+            "win_rate": stats.win_rate_percentage if stats else 0.0,
+            "accuracy": stats.accuracy_percentage if stats else 0.0,
+            "highest_streak": stats.highest_streak if stats else 0,
+            "daily_streak": stats.daily_streak if stats else 0,
+            "highest_score": stats.highest_score if stats else 0,
+        },
+        "achievements": unlocked_achievements,
+    }
+
+    return success_response(data=profile_data)
+
+
+@api_bp.route("/players/<username>/history")
+def api_get_player_history(username: str):
+    """Retrieve paginated match performance history for a player."""
+    user = user_repo.get_by_username(username.strip())
+    if not user or not user.is_active:
+        return error_response(message="Player not found.", status_code=404, error_code="NOT_FOUND")
+
+    page = request.args.get("page", 1, type=int)
+    per_page = min(request.args.get("per_page", 10, type=int), 50)
+
+    pagination = game_repo.get_user_match_history(user_id=user.id, page=page, per_page=per_page)
+    history_items = [m.to_dict() for m in pagination.get("items", [])]
+
+    return success_response(
+        data=history_items,
+        meta={
+            "page": pagination.get("page", 1),
+            "pages": pagination.get("pages", 1),
+            "total": pagination.get("total", 0),
+        },
+    )
+
+
+@api_bp.route("/achievements")
+def api_list_achievements():
+    """List all platform achievements and reward definitions."""
+    achievements = Achievement.query.order_by(Achievement.tier.asc(), Achievement.id.asc()).all()
+    data = [a.to_dict() for a in achievements]
+    return success_response(data=data, message="Achievements retrieved successfully.")
+
+
+
 
 
 
