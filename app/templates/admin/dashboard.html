@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block title %}Platform Administration — Quiz Royale{% endblock %}
+
+{% block content %}
+<div style="max-width: 1040px; margin: 2rem auto;">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+    <div>
+      <div style="display: inline-flex; align-items: center; gap: 0.5rem; color: var(--accent-coral); font-size: 0.85rem; font-weight: 700; text-transform: uppercase;">
+        🛡️ Administrative Control Center
+      </div>
+      <h1 style="font-size: 2.25rem; font-weight: 800; letter-spacing: -0.02em;">Overview & Diagnostics</h1>
+    </div>
+
+    <!-- Quick Navigation Bar -->
+    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+      <a href="{{ url_for('admin.list_questions') }}" class="btn btn-outline btn-sm">Questions</a>
+      <a href="{{ url_for('admin.list_categories') }}" class="btn btn-outline btn-sm">Categories</a>
+      <a href="{{ url_for('admin.bulk_import') }}" class="btn btn-outline btn-sm">Bulk Import</a>
+      <a href="{{ url_for('admin.list_users') }}" class="btn btn-outline btn-sm">Users</a>
+      <a href="{{ url_for('admin.list_reports') }}" class="btn btn-outline btn-sm">Reports ({{ pending_reports }})</a>
+      <a href="{{ url_for('admin.view_audit_logs') }}" class="btn btn-outline btn-sm">Audit Logs</a>
+    </div>
+  </div>
+
+  <!-- Operational Metrics Cards -->
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.25rem; margin-bottom: 2.5rem;">
+    <div class="card" style="border-left: 4px solid var(--accent-gold);">
+      <span style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Question Bank</span>
+      <div style="font-size: 2rem; font-weight: 800; color: var(--text-primary); margin: 0.25rem 0;">{{ total_questions }}</div>
+      <span style="font-size: 0.8rem; color: var(--color-success);">{{ total_published_q }} Published Active</span>
+    </div>
+
+    <div class="card" style="border-left: 4px solid var(--accent-purple);">
+      <span style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Registered Warriors</span>
+      <div style="font-size: 2rem; font-weight: 800; color: var(--text-primary); margin: 0.25rem 0;">{{ total_users }}</div>
+      <span style="font-size: 0.8rem; color: var(--accent-purple);">{{ total_active_users }} Active Players</span>
+    </div>
+
+    <div class="card" style="border-left: 4px solid var(--color-success);">
+      <span style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Disciplines</span>
+      <div style="font-size: 2rem; font-weight: 800; color: var(--text-primary); margin: 0.25rem 0;">{{ total_categories }}</div>
+      <span style="font-size: 0.8rem; color: var(--color-success);">All 14 Core Topics Seeded</span>
+    </div>
+
+    <div class="card" style="border-left: 4px solid var(--accent-coral);">
+      <span style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Pending Flags</span>
+      <div style="font-size: 2rem; font-weight: 800; color: var(--accent-coral); margin: 0.25rem 0;">{{ pending_reports }}</div>
+      <span style="font-size: 0.8rem; color: var(--text-muted);">Player Moderation Reports</span>
+    </div>
+  </div>
+
+  <!-- System Health & Recent Audit Logs -->
+  <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 1.5rem;">
+    <!-- Diagnostics Card -->
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title" style="font-size: 1.15rem;">Engine Health</h2>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 0.85rem; font-size: 0.9rem;">
+        <div style="display: flex; justify-content: space-between;">
+          <span style="color: var(--text-muted);">Database:</span>
+          <span style="color: var(--color-success); font-weight: 700;">SQLite / WAL (Healthy)</span>
+        </div>
+        <div style="display: flex; justify-content: space-between;">
+          <span style="color: var(--text-muted);">Socket.IO Transport:</span>
+          <span style="color: var(--accent-purple); font-weight: 700;">WebSocket (Threading)</span>
+        </div>
+        <div style="display: flex; justify-content: space-between;">
+          <span style="color: var(--text-muted);">Anti-Tamper Timing:</span>
+          <span style="color: var(--color-success); font-weight: 700;">Authoritative Enabled</span>
+        </div>
+        <div style="display: flex; justify-content: space-between;">
+          <span style="color: var(--text-muted);">External API Keys:</span>
+          <span style="color: var(--accent-gold); font-weight: 700;">0 (100% Self-Contained)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Audit Logs -->
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title" style="font-size: 1.15rem;">Recent Audit Activity</h2>
+        <a href="{{ url_for('admin.view_audit_logs') }}" style="font-size: 0.85rem;">View All Logs &rarr;</a>
+      </div>
+
+      {% if recent_logs %}
+        <div style="overflow-x: auto;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem; text-align: left;">
+            <thead>
+              <tr style="border-bottom: 1px solid var(--color-border); color: var(--text-muted);">
+                <th style="padding: 0.5rem 0.75rem;">Action</th>
+                <th style="padding: 0.5rem 0.75rem;">Entity</th>
+                <th style="padding: 0.5rem 0.75rem;">Actor</th>
+                <th style="padding: 0.5rem 0.75rem;">Time</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for log in recent_logs %}
+                <tr style="border-bottom: 1px solid var(--color-border);">
+                  <td style="padding: 0.5rem 0.75rem; font-weight: 600; color: var(--accent-gold);">{{ log.action_type }}</td>
+                  <td style="padding: 0.5rem 0.75rem; text-transform: capitalize;">{{ log.target_entity }} #{{ log.target_id }}</td>
+                  <td style="padding: 0.5rem 0.75rem;">{{ log.user.username if log.user else 'System' }}</td>
+                  <td style="padding: 0.5rem 0.75rem; color: var(--text-muted);">{{ log.created_at.strftime('%H:%M:%S') if log.created_at else '' }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div style="padding: 1.5rem; text-align: center; color: var(--text-muted); font-size: 0.9rem;">
+          No administrative operations logged yet.
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
