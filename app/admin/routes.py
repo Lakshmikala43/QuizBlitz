@@ -485,3 +485,92 @@ def toggle_user_admin(user_id: int):
     flash(f"User @{user.username} has been {status_str}.", "success")
     return redirect(url_for("admin.list_users"))
 
+
+# --- Content Moderation & Reports ---
+@admin_bp.route("/reports")
+@admin_required
+def list_reports():
+    """Moderation queue displaying player-flagged questions."""
+    status_filter = request.args.get("status", "pending").strip().lower()
+    page = request.args.get("page", 1, type=int)
+    per_page = 15
+
+    q = db.session.query(Report)
+    if status_filter in {"pending", "resolved", "dismissed"}:
+        q = q.filter(Report.status == status_filter)
+
+    q = q.order_by(Report.created_at.desc())
+    total = q.count()
+    offset = max(0, (page - 1) * per_page)
+    reports = q.limit(per_page).offset(offset).all()
+    pages = max(1, (total + per_page - 1) // per_page)
+
+    pagination = {
+        "items": reports,
+        "total": total,
+        "page": page,
+        "pages": pages,
+        "has_prev": page > 1,
+        "has_next": page < pages,
+    }
+
+    pending_count = db.session.query(func.count(Report.id)).filter_by(status="pending").scalar() or 0
+
+    return render_template(
+        "admin/reports.html",
+        reports=reports,
+        pagination=pagination,
+        status_filter=status_filter,
+        pending_count=pending_count,
+    )
+
+
+@admin_bp.route("/reports/<int:report_id>/resolve", methods=["POST"])
+@admin_required
+def resolve_report(report_id: int):
+    """Mark a moderation report as resolved with optional admin notes and unpublishing action."""
+    report = db.session.get(Report, report_id)
+    if not report:
+        flash("Report not found.", "danger")
+        return redirect(url_for("admin.list_reports"))
+
+    admin_notes = request.form.get("admin_notes", "").strip()
+    unpublish = bool(request.form.get("unpublish_question"))
+
+    report.status = "resolved"
+    report.admin_notes = admin_notes if admin_notes else "Resolved by administrator."
+    report.resolved_at = datetime.now(timezone.utc)
+
+    if unpublish and report.question:
+        report.question.is_published = False
+
+    db.session.commit()
+    log_admin_action(
+        "resolve_report",
+        "report",
+        str(report.id),
+        {"question_id": report.question_id, "unpublished": unpublish, "notes": admin_notes},
+    )
+    flash(f"Report #{report.id} marked as resolved.", "success")
+    return redirect(url_for("admin.list_reports"))
+
+
+@admin_bp.route("/reports/<int:report_id>/dismiss", methods=["POST"])
+@admin_required
+def dismiss_report(report_id: int):
+    """Dismiss a false or invalid player report."""
+    report = db.session.get(Report, report_id)
+    if not report:
+        flash("Report not found.", "danger")
+        return redirect(url_for("admin.list_reports"))
+
+    report.status = "dismissed"
+    report.admin_notes = request.form.get("admin_notes", "Dismissed as invalid.").strip()
+    report.resolved_at = datetime.now(timezone.utc)
+
+    db.session.commit()
+    log_admin_action("dismiss_report", "report", str(report.id), {"question_id": report.question_id})
+    flash(f"Report #{report.id} dismissed.", "info")
+    return redirect(url_for("admin.list_reports"))
+
+

@@ -190,3 +190,55 @@ def daily_challenge_view():
         attempt=attempt,
         leaderboard=today_attempts,
     )
+
+
+@games_bp.route("/report-question", methods=["POST"])
+@login_required
+def report_question():
+    """Allow players to report or flag problematic questions during match review."""
+    from app.models.moderation import Report
+
+    question_id = request.form.get("question_id", type=int)
+    reason = request.form.get("reason", "").strip()
+    details = request.form.get("details", "").strip()
+    session_id = request.form.get("session_id", "")
+
+    if not question_id or not reason:
+        flash("Please provide a reason for reporting this question.", "warning")
+        if session_id:
+            return redirect(url_for("games.review_view", session_id=session_id))
+        return redirect(url_for("players.dashboard"))
+
+    # Verify question exists
+    question = question_repo.get_by_id(question_id)
+    if not question:
+        flash("Question not found.", "danger")
+        if session_id:
+            return redirect(url_for("games.review_view", session_id=session_id))
+        return redirect(url_for("players.dashboard"))
+
+    # Check for duplicate pending report by same user
+    existing = Report.query.filter_by(
+        question_id=question_id,
+        reporter_user_id=current_user.id,
+        status="pending"
+    ).first()
+
+    if existing:
+        flash("You have already submitted a pending report for this question.", "info")
+    else:
+        new_report = Report(
+            question_id=question_id,
+            reporter_user_id=current_user.id,
+            reason=reason,
+            details=details if details else None,
+            status="pending",
+        )
+        db.session.add(new_report)
+        db.session.commit()
+        flash("Thank you! Your report has been submitted to moderators for review.", "success")
+
+    if session_id:
+        return redirect(url_for("games.review_view", session_id=session_id))
+    return redirect(url_for("players.dashboard"))
+

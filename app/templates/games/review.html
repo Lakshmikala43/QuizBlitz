@@ -70,11 +70,37 @@
 
         <!-- Educational Explanation -->
         {% if q.explanation %}
-          <div style="background-color: var(--bg-surface-elevated); padding: 0.85rem 1rem; border-radius: var(--radius-sm); font-size: 0.9rem; line-height: 1.5; color: var(--text-secondary); border-left: 2px solid var(--accent-gold);">
+          <div style="background-color: var(--bg-surface-elevated); padding: 0.85rem 1rem; border-radius: var(--radius-sm); font-size: 0.9rem; line-height: 1.5; color: var(--text-secondary); border-left: 2px solid var(--accent-gold); margin-bottom: 0.75rem;">
             <strong style="color: var(--accent-gold); display: block; margin-bottom: 0.25rem;">Explanation:</strong>
             {{ q.explanation }}
           </div>
         {% endif %}
+
+        <!-- Report Question Link & Collapsible -->
+        <div style="display: flex; justify-content: flex-end;">
+          <details style="font-size: 0.8rem; color: var(--text-muted); cursor: pointer;">
+            <summary style="user-select: none; color: var(--text-muted); hover: color: var(--accent-coral);">🚩 Report an issue with this question</summary>
+            <form method="POST" action="{{ url_for('games.report_question') }}" style="margin-top: 0.75rem; padding: 0.75rem; background: var(--bg-surface-elevated); border-radius: var(--radius-sm); border: 1px solid var(--color-border); text-align: left;">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input type="hidden" name="question_id" value="{{ q.id }}">
+              <input type="hidden" name="session_id" value="{{ session.id }}">
+
+              <label class="form-label" style="font-size: 0.75rem; margin-bottom: 0.25rem;">Reason</label>
+              <select name="reason" class="form-control" style="font-size: 0.8rem; padding: 0.35rem 0.5rem; margin-bottom: 0.5rem;" required>
+                <option value="incorrect_answer">Incorrect answer marked</option>
+                <option value="typo">Typo or formatting error</option>
+                <option value="outdated">Information is outdated</option>
+                <option value="offensive">Inappropriate or offensive content</option>
+                <option value="other">Other issue</option>
+              </select>
+
+              <label class="form-label" style="font-size: 0.75rem; margin-bottom: 0.25rem;">Details (Optional)</label>
+              <input type="text" name="details" class="form-control" placeholder="Briefly describe the flaw..." style="font-size: 0.8rem; padding: 0.35rem 0.5rem; margin-bottom: 0.5rem;">
+
+              <button type="submit" class="btn btn-outline btn-sm" style="font-size: 0.75rem; padding: 0.25rem 0.6rem; border-color: var(--accent-coral); color: var(--accent-coral);">Submit Report</button>
+            </form>
+          </details>
+        </div>
 
       </div>
     {% endfor %}
