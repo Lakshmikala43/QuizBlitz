@@ -351,6 +351,46 @@ def api_get_game_summary(session_id: str):
     return success_response(data=summary)
 
 
+# --- Leaderboards APIs ---
+from app.repositories import StatsRepository
+
+stats_repo = StatsRepository()
+
+
+@api_bp.route("/leaderboards")
+def api_get_leaderboard():
+    """Retrieve ranked competitive leaderboards by timeframe."""
+    timeframe = request.args.get("timeframe", "all_time").strip().lower()
+    if timeframe not in {"all_time", "daily", "weekly"}:
+        timeframe = "all_time"
+
+    limit = min(request.args.get("limit", 25, type=int), 100)
+    offset = max(0, request.args.get("offset", 0, type=int))
+
+    rankings = stats_repo.get_leaderboard(
+        timeframe=timeframe,
+        limit=limit,
+        offset=offset,
+    )
+
+    podium = rankings[:3] if len(rankings) >= 3 else rankings
+
+    return success_response(
+        data={
+            "timeframe": timeframe,
+            "podium": podium,
+            "rankings": rankings,
+        },
+        meta={
+            "limit": limit,
+            "offset": offset,
+            "count": len(rankings),
+        },
+        message="Leaderboard retrieved successfully.",
+    )
+
+
+
 
 
 
