@@ -35,8 +35,7 @@ class ScoringEngine:
         # Consecutive streak adds 10% per streak up to 50% max bonus
         new_streak = current_streak + 1
         effective_streak = min(new_streak, MAX_STREAK_CAP)
-        streak_multiplier = 1.0 + (max(0, effective_streak - 1) * 0.10)
-        streak_points = int(base * (streak_multiplier - 1.0))
+        streak_points = int(round(base * max(0, effective_streak - 1) * 0.10))
 
         # 3. Speed Bonus
         # Faster answers receive up to 50 extra points
@@ -44,10 +43,11 @@ class ScoringEngine:
         speed_bonus = 0
         if response_time_ms < (time_limit_ms * 0.75):
             fraction_remaining = 1.0 - (response_time_ms / (time_limit_ms * 0.75))
-            speed_bonus = max(0, min(MAX_SPEED_BONUS, int(MAX_SPEED_BONUS * fraction_remaining)))
+            speed_bonus = max(0, min(MAX_SPEED_BONUS, int(round(MAX_SPEED_BONUS * fraction_remaining))))
 
         total_awarded = base + streak_points + speed_bonus
         return total_awarded, streak_points, speed_bonus, new_streak
+
 
     @staticmethod
     def calculate_match_rewards(
