@@ -467,6 +467,81 @@ def api_list_achievements():
     return success_response(data=data, message="Achievements retrieved successfully.")
 
 
+# --- Multiplayer Arena APIs ---
+from app.models.multiplayer import MultiplayerRoom
+from app.multiplayer.manager import room_manager
+
+
+@api_bp.route("/multiplayer/rooms")
+def api_list_multiplayer_rooms():
+    """List open and waiting multiplayer match lobbies."""
+    rooms = (
+        MultiplayerRoom.query.filter(MultiplayerRoom.status.in_(["waiting", "starting"]))
+        .order_by(MultiplayerRoom.created_at.desc())
+        .limit(30)
+        .all()
+    )
+    data = [r.to_dict() for r in rooms]
+    return success_response(data=data, message="Active match rooms retrieved.")
+
+
+@api_bp.route("/multiplayer/rooms", methods=["POST"])
+@api_auth_required
+def api_create_multiplayer_room():
+    """Initialize a new multiplayer room lobby."""
+    data = request.get_json(silent=True) or request.form.to_dict()
+    category_slug = data.get("category", "all")
+    difficulty = data.get("difficulty", "medium")
+    question_count = max(5, min(20, int(data.get("question_count", 10))))
+    max_players = max(2, min(16, int(data.get("max_players", 8))))
+
+    try:
+        room_code = room_manager.create_room(
+            host_user=current_user,
+            category_slug=category_slug,
+            difficulty=difficulty,
+            question_count=question_count,
+            max_players=max_players,
+        )
+        room = MultiplayerRoom.query.filter_by(room_code=room_code).first()
+
+        return success_response(
+            data=room.to_dict() if room else {"room_code": room_code},
+            message="Multiplayer room created successfully.",
+            status_code=201,
+        )
+    except Exception as e:
+        return error_response(
+            message=f"Failed to create multiplayer room: {str(e)}",
+            status_code=400,
+            error_code="ROOM_CREATION_FAILED",
+        )
+
+
+@api_bp.route("/multiplayer/rooms/<room_code>")
+def api_get_multiplayer_room(room_code: str):
+    """Retrieve match room lobby details, participants, and status."""
+    clean_code = room_code.strip().upper()
+    room = MultiplayerRoom.query.filter_by(room_code=clean_code).first()
+    if not room:
+        return error_response(
+            message=f"Room '{clean_code}' not found.",
+            status_code=404,
+            error_code="ROOM_NOT_FOUND",
+        )
+
+    room_data = room.to_dict()
+    # Fetch live participants from in-memory manager if active, else DB
+    mem_participants = room_manager.get_room_leaderboard(clean_code)
+    if mem_participants:
+        room_data["participants"] = mem_participants
+    else:
+        room_data["participants"] = [p.to_dict() for p in room.participants]
+
+    return success_response(data=room_data)
+
+
+
 
 
 
