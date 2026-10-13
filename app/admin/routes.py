@@ -70,3 +70,158 @@ def dashboard():
         pending_reports=pending_reports,
         recent_logs=recent_logs,
     )
+
+
+@admin_bp.route("/questions")
+@admin_required
+def list_questions():
+    """Admin questions listing with category, difficulty filters and search."""
+    page = request.args.get("page", 1, type=int)
+    category_id = request.args.get("category_id", type=int)
+    difficulty = request.args.get("difficulty")
+    search = request.args.get("search")
+
+    paginated = question_repo.search_questions(
+        category_id=category_id,
+        difficulty=difficulty,
+        search_text=search,
+        page=page,
+        per_page=15,
+    )
+
+    categories = category_repo.get_all()
+
+    return render_template(
+        "admin/questions.html",
+        questions=paginated,
+        categories=categories,
+        selected_cat=category_id,
+        selected_diff=difficulty,
+        search=search or "",
+    )
+
+
+@admin_bp.route("/questions/create", methods=["GET", "POST"])
+@admin_required
+def create_question():
+    """Create a new question with 4 options."""
+    categories = category_repo.get_all()
+
+    if request.method == "POST":
+        q_text = request.form.get("question_text", "").strip()
+        cat_id = request.form.get("category_id", type=int)
+        difficulty = request.form.get("difficulty", "medium")
+        explanation = request.form.get("explanation", "").strip()
+        points = request.form.get("points", 100, type=int)
+        time_limit = request.form.get("time_limit_sec", 15, type=int)
+        correct_index = request.form.get("correct_option", 0, type=int)
+
+        opt_texts = [
+            request.form.get(f"option_{i}", "").strip()
+            for i in range(4)
+        ]
+
+        # Validation
+        if len(q_text) < 10:
+            flash("Question text must be at least 10 characters.", "danger")
+            return render_template("admin/question_edit.html", categories=categories, question=None)
+
+        if any(len(t) < 1 for t in opt_texts):
+            flash("All 4 option choices must have text.", "danger")
+            return render_template("admin/question_edit.html", categories=categories, question=None)
+
+        # Duplicate check
+        if question_repo.detect_duplicate_question(q_text):
+            flash("An identical question already exists in the database.", "warning")
+            return render_template("admin/question_edit.html", categories=categories, question=None)
+
+        q_data = {
+            "category_id": cat_id,
+            "question_text": q_text,
+            "difficulty": difficulty,
+            "explanation": explanation,
+            "points": points,
+            "time_limit_sec": time_limit,
+            "is_published": True,
+        }
+        options_data = [
+            {"option_text": opt_texts[i], "is_correct": (i == correct_index), "order_index": i}
+            for i in range(4)
+        ]
+
+        q = question_repo.create_question_with_options(q_data, options_data)
+        log_admin_action("create_question", "question", q.id, {"text": q_text[:50]})
+        flash(f"Question #{q.id} created successfully!", "success")
+        return redirect(url_for("admin.list_questions"))
+
+    return render_template("admin/question_edit.html", categories=categories, question=None)
+
+
+@admin_bp.route("/questions/<int:question_id>/edit", methods=["GET", "POST"])
+@admin_required
+def edit_question(question_id):
+    """Edit existing question and options."""
+    question = question_repo.get_by_id(question_id)
+    if not question:
+        abort(404)
+
+    categories = category_repo.get_all()
+
+    if request.method == "POST":
+        q_text = request.form.get("question_text", "").strip()
+        cat_id = request.form.get("category_id", type=int)
+        difficulty = request.form.get("difficulty", "medium")
+        explanation = request.form.get("explanation", "").strip()
+        points = request.form.get("points", 100, type=int)
+        time_limit = request.form.get("time_limit_sec", 15, type=int)
+        correct_index = request.form.get("correct_option", 0, type=int)
+
+        opt_texts = [
+            request.form.get(f"option_{i}", "").strip()
+            for i in range(4)
+        ]
+
+        q_data = {
+            "category_id": cat_id,
+            "question_text": q_text,
+            "difficulty": difficulty,
+            "explanation": explanation,
+            "points": points,
+            "time_limit_sec": time_limit,
+        }
+        options_data = [
+            {"option_text": opt_texts[i], "is_correct": (i == correct_index), "order_index": i}
+            for i in range(4)
+        ]
+
+        question_repo.update_question_with_options(question.id, q_data, options_data)
+        log_admin_action("update_question", "question", question.id, {"text": q_text[:50]})
+        flash(f"Question #{question.id} updated successfully!", "success")
+        return redirect(url_for("admin.list_questions"))
+
+    return render_template("admin/question_edit.html", categories=categories, question=question)
+
+
+@admin_bp.route("/questions/<int:question_id>/delete", methods=["POST"])
+@admin_required
+def delete_question(question_id):
+    """Delete a question."""
+    question = question_repo.get_by_id(question_id)
+    if question:
+        log_admin_action("delete_question", "question", question.id, {"text": question.question_text[:50]})
+        question_repo.delete(question)
+        flash("Question deleted successfully.", "info")
+    return redirect(url_for("admin.list_questions"))
+
+
+@admin_bp.route("/questions/<int:question_id>/toggle-publish", methods=["POST"])
+@admin_required
+def toggle_publish_question(question_id):
+    """Toggle publication status."""
+    question = question_repo.get_by_id(question_id)
+    if question:
+        question.is_published = not question.is_published
+        db.session.commit()
+        log_admin_action("toggle_publish", "question", question.id, {"is_published": question.is_published})
+        flash(f"Question publication set to {question.is_published}.", "success")
+    return redirect(url_for("admin.list_questions"))
