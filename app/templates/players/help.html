@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}Rules, Scoring & Guide — Quiz Royale{% endblock %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 2rem auto;">
+  <div style="margin-bottom: 2rem;">
+    <h1 style="font-size: 2.25rem; font-weight: 800;">Battle Rules & Scoring Guide</h1>
+    <p style="color: var(--text-secondary); margin-top: 0.25rem;">Everything you need to know to climb the ranks in Quiz Royale.</p>
+  </div>
+
+  <div class="card" style="margin-bottom: 2rem;">
+    <h2 style="font-size: 1.4rem; color: var(--accent-gold); margin-bottom: 1rem;">1. Authoritative Scoring Model</h2>
+    <p style="color: var(--text-secondary); margin-bottom: 1rem;">
+      Scores are calculated authoritatively on the server. The faster you respond with a correct answer, the more bonus points you earn.
+    </p>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+      <div style="background-color: var(--bg-surface-elevated); padding: 1rem; border-radius: var(--radius-md); border-left: 3px solid var(--color-success);">
+        <strong style="color: var(--text-primary); display: block;">Easy Questions</strong>
+        <span style="font-size: 1.25rem; font-weight: 700; color: var(--color-success);">100 Points</span>
+      </div>
+      <div style="background-color: var(--bg-surface-elevated); padding: 1rem; border-radius: var(--radius-md); border-left: 3px solid var(--accent-gold);">
+        <strong style="color: var(--text-primary); display: block;">Medium Questions</strong>
+        <span style="font-size: 1.25rem; font-weight: 700; color: var(--accent-gold);">200 Points</span>
+      </div>
+      <div style="background-color: var(--bg-surface-elevated); padding: 1rem; border-radius: var(--radius-md); border-left: 3px solid var(--accent-coral);">
+        <strong style="color: var(--text-primary); display: block;">Hard Questions</strong>
+        <span style="font-size: 1.25rem; font-weight: 700; color: var(--accent-coral);">300 Points</span>
+      </div>
+    </div>
+
+    <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem;">Speed Bonus Formula</h3>
+    <p style="font-size: 0.95rem; color: var(--text-secondary); margin-bottom: 1rem;">
+      Answering within the first 50% of the countdown awards up to 50 additional speed bonus points:
+      <br>
+      <code>Speed Bonus = max(0, int(50 * (1 - (response_time_ms / (time_limit_ms * 0.75)))))</code>
+    </p>
+
+    <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem;">Streak Multipliers</h3>
+    <p style="font-size: 0.95rem; color: var(--text-secondary);">
+      Consecutive correct answers increase your streak. Each streak step adds +10% bonus up to a 5-streak cap (1.5x multiplier). Any wrong answer or timeout immediately resets your streak to 0.
+    </p>
+  </div>
+
+  <div class="card" style="margin-bottom: 2rem;">
+    <h2 style="font-size: 1.4rem; color: var(--accent-purple); margin-bottom: 1rem;">2. Level Progression (XP Curve)</h2>
+    <p style="color: var(--text-secondary); margin-bottom: 1rem;">
+      Your level reflects your cumulative battlefield mastery. Experience Points (XP) are awarded upon completing matches and unlocking achievements:
+    </p>
+    <div style="background-color: var(--bg-surface-elevated); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.9rem; color: var(--accent-amber); margin-bottom: 1rem;">
+      Cumulative XP Required = ceil(100 * (Level - 1) ^ 1.5)
+    </div>
+    <ul style="color: var(--text-secondary); padding-left: 1.5rem; line-height: 1.8;">
+      <li>Level 1: 0 XP</li>
+      <li>Level 2: 100 XP</li>
+      <li>Level 5: 800 XP</li>
+      <li>Level 10: 2,700 XP</li>
+      <li>Level 25: 11,758 XP</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2 style="font-size: 1.4rem; color: var(--color-info); margin-bottom: 1rem;">3. Fair Play & Security Safeguards</h2>
+    <ul style="color: var(--text-secondary); padding-left: 1.5rem; line-height: 1.8;">
+      <li><strong>No Client-Side Answers:</strong> Correct answers are never sent to your browser ahead of time.</li>
+      <li><strong>Server Timestamp Verification:</strong> The server tracks question start and elapsed milliseconds. Client clock manipulation is ineffective.</li>
+      <li><strong>Idempotent Submissions:</strong> Rapid clicking or duplicate packet replay will not award multiple points.</li>
+      <li><strong>Daily Challenge Limit:</strong> Strictly one ranked entry per player per calendar day.</li>
+    </ul>
+  </div>
+</div>
+{% endblock %}
