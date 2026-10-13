@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+
+{% block title %}Multiplayer Room {{ room_code }} — Quiz Royale{% endblock %}
+
+{% block styles %}
+<style>
+  .room-container {
+    max-width: 840px;
+    margin: 1.5rem auto;
+  }
+  .options-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  @media (max-width: 640px) {
+    .options-grid { grid-template-columns: 1fr; }
+  }
+  .option-btn {
+    background-color: var(--bg-surface-elevated);
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 1.25rem 1rem;
+    color: var(--text-primary);
+    font-size: 1rem;
+    font-weight: 600;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+  }
+  .option-btn:hover:not(:disabled) {
+    border-color: var(--accent-purple);
+    background-color: rgba(139, 92, 246, 0.1);
+    transform: translateY(-2px);
+  }
+  .option-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.9;
+  }
+  .option-letter {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-sm);
+    background-color: var(--bg-surface);
+    border: 1px solid var(--color-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    color: var(--accent-gold);
+    flex-shrink: 0;
+  }
+  .option-btn.selected {
+    border-color: var(--accent-gold);
+    background-color: rgba(245, 158, 11, 0.15);
+  }
+  .option-btn.correct {
+    border-color: var(--color-success) !important;
+    background-color: var(--color-success-bg) !important;
+    color: #34d399 !important;
+  }
+  .timer-bar-track {
+    width: 100%;
+    height: 10px;
+    background-color: var(--bg-surface-elevated);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+  }
+  .timer-bar-fill {
+    width: 100%;
+    height: 100%;
+    background-color: var(--accent-purple);
+    transition: width 1s linear;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="room-container">
+
+  <!-- ================= STATE 1: LOBBY ================= -->
+  <div id="lobby-view" class="card-glass">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+      <div>
+        <span style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Battle Lobby</span>
+        <h1 style="font-size: 2.25rem; font-weight: 900; letter-spacing: 0.1em; color: var(--accent-gold);">
+          ROOM: <span id="room-code-display">{{ room_code }}</span>
+        </h1>
+      </div>
+
+      <div style="display: flex; gap: 0.75rem;">
+        <button type="button" class="btn btn-outline btn-sm" onclick="navigator.clipboard.writeText('{{ room_code }}'); alert('Room Code Copied!');">
+          📋 Copy Code
+        </button>
+        <span id="player-count" class="player-pill">Loading Players...</span>
+      </div>
+    </div>
+
+    <!-- Participants Roster -->
+    <h2 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 1rem;">Joined Warriors</h2>
+    <div id="lobby-roster" style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 2rem;"></div>
+
+    <!-- Lobby Actions -->
+    <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--color-border); padding-top: 1.5rem;">
+      <a href="{{ url_for('multiplayer.lobby') }}" class="btn btn-outline btn-sm">&larr; Leave Room</a>
+      <div style="display: flex; gap: 1rem;">
+        <button id="ready-btn" class="btn btn-outline">Toggle Ready</button>
+        <button id="start-btn" class="btn btn-gold" style="display: none;">⚔️ Start Battle</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= STATE 2: ACTIVE ARENA ================= -->
+  <div id="arena-view" style="display: none;">
+    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem;">
+
+      <!-- Arena Combat Column -->
+      <div class="card-glass">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; font-weight: 600;">
+          <span id="mp-progress-text" style="color: var(--text-secondary);">Question 1</span>
+          <span id="mp-timer-text" style="color: var(--accent-amber); font-family: var(--font-mono); font-size: 1.1rem;">15s</span>
+        </div>
+
+        <div class="timer-bar-track">
+          <div id="mp-timer-bar" class="timer-bar-fill"></div>
+        </div>
+
+        <h2 id="mp-question-text" style="font-size: 1.35rem; font-weight: 700; line-height: 1.4; margin-bottom: 1.5rem;">
+          Synchronizing question...
+        </h2>
+
+        <div id="mp-options-container" class="options-grid"></div>
+
+        <!-- Feedback Box -->
+        <div id="mp-feedback-box" class="card" style="display: none; background-color: var(--bg-surface-elevated); padding: 1rem; border-left: 3px solid var(--accent-gold);">
+          <strong id="mp-feedback-title" style="display: block; margin-bottom: 0.25rem;"></strong>
+          <p id="mp-feedback-exp" style="font-size: 0.9rem; color: var(--text-secondary);"></p>
+        </div>
+      </div>
+
+      <!-- Live Standing Sidebar -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title" style="font-size: 1.1rem;">Live Standing</h3>
+        </div>
+        <div id="mp-scoreboard"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ================= STATE 3: FINAL PODIUM ================= -->
+  <div id="podium-view" class="card-glass" style="display: none; text-align: center;">
+    <div style="margin-bottom: 1rem;">
+      <span style="font-size: 4rem;">🏆</span>
+    </div>
+    <h1 style="font-size: 2.5rem; font-weight: 900; margin-bottom: 0.5rem;">Battle Concluded!</h1>
+    <p style="color: var(--text-secondary); margin-bottom: 2rem;">Here are the final standings of Room {{ room_code }}:</p>
+
+    <div id="mp-podium-list" style="max-width: 500px; margin: 0 auto 2.5rem;"></div>
+
+    <a href="{{ url_for('multiplayer.lobby') }}" class="btn btn-gold btn-lg">
+      Return to Multiplayer Lobby
+    </a>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Flask-SocketIO Client Script -->
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script src="{{ url_for('static', filename='js/multiplayer.js') }}"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    window.multiplayerArena = new MultiplayerArena("{{ room_code }}");
+  });
+</script>
+{% endblock %}
