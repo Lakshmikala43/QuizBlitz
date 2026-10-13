@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}429 Rate Limit Exceeded — Quiz Royale{% endblock %}
+
+{% block content %}
+<div style="max-width: 650px; margin: 4rem auto; text-align: center; padding: 2rem;">
+  <div style="display: inline-block; padding: 0.5rem 1.25rem; border-radius: 999px; background: rgba(245, 158, 11, 0.15); color: var(--accent-gold); font-weight: 800; font-size: 1.1rem; border: 1px solid rgba(245, 158, 11, 0.3); margin-bottom: 1.5rem;">
+    ⏳ ERROR 429
+  </div>
+
+  <h1 style="font-size: 2.75rem; font-weight: 900; letter-spacing: -0.02em; margin-bottom: 1rem;">
+    Rate Limit Reached
+  </h1>
+
+  <p style="font-size: 1.1rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: 2rem;">
+    Whoa there, warrior! You are transmitting requests at supersonic speed. Our anti-spam defenses have paused your incoming signals.
+  </p>
+
+  <div class="card" style="text-align: left; padding: 1.25rem 1.5rem; margin-bottom: 2rem; background: var(--bg-surface-elevated); border-left: 4px solid var(--accent-gold);">
+    <div style="font-weight: 700; color: var(--text-primary); margin-bottom: 0.25rem;">Cooldown In Effect:</div>
+    <div style="font-size: 0.9rem; color: var(--text-muted); line-height: 1.5;">
+      Please wait a few seconds before submitting further answers, authentication requests, or lobby room interactions.
+    </div>
+  </div>
+
+  <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+    <button onclick="window.location.reload();" class="btn btn-gold btn-lg">
+      Retry Request
+    </button>
+    <a href="{{ url_for('players.dashboard') if current_user.is_authenticated else url_for('players.landing') }}" class="btn btn-outline btn-lg">
+      Return to Hub
+    </a>
+  </div>
+</div>
+{% endblock %}

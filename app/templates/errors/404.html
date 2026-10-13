@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}404 Arena Not Found — Quiz Royale{% endblock %}
+
+{% block content %}
+<div style="max-width: 650px; margin: 4rem auto; text-align: center; padding: 2rem;">
+  <div style="display: inline-block; padding: 0.5rem 1.25rem; border-radius: 999px; background: rgba(99, 102, 241, 0.15); color: var(--accent-purple); font-weight: 800; font-size: 1.1rem; border: 1px solid rgba(99, 102, 241, 0.3); margin-bottom: 1.5rem;">
+    🔍 ERROR 404
+  </div>
+
+  <h1 style="font-size: 2.75rem; font-weight: 900; letter-spacing: -0.02em; margin-bottom: 1rem;">
+    Sector Not Found
+  </h1>
+
+  <p style="font-size: 1.1rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: 2rem;">
+    The challenge arena, lobby room, or question page you are looking for has expired, relocated, or never existed in the realm.
+  </p>
+
+  <div class="card" style="text-align: left; padding: 1.25rem 1.5rem; margin-bottom: 2rem; background: var(--bg-surface-elevated); border-left: 4px solid var(--accent-purple);">
+    <div style="font-weight: 700; color: var(--text-primary); margin-bottom: 0.25rem;">Suggested Coordinates:</div>
+    <ul style="margin: 0.5rem 0 0 1.25rem; font-size: 0.9rem; color: var(--text-muted); line-height: 1.6;">
+      <li>Return to the main command dashboard to resume your campaigns</li>
+      <li>Browse open quiz categories and initiate a custom battle</li>
+      <li>Check the multiplayer lobby for active public battle rooms</li>
+    </ul>
+  </div>
+
+  <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+    <a href="{{ url_for('players.dashboard') if current_user.is_authenticated else url_for('players.landing') }}" class="btn btn-gold btn-lg">
+      Back to Dashboard
+    </a>
+    <a href="{{ url_for('categories.list_categories') }}" class="btn btn-outline btn-lg">
+      Explore Categories
+    </a>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}500 Engine Malfunction — Quiz Royale{% endblock %}
+
+{% block content %}
+<div style="max-width: 650px; margin: 4rem auto; text-align: center; padding: 2rem;">
+  <div style="display: inline-block; padding: 0.5rem 1.25rem; border-radius: 999px; background: rgba(239, 68, 68, 0.15); color: #ef4444; font-weight: 800; font-size: 1.1rem; border: 1px solid rgba(239, 68, 68, 0.3); margin-bottom: 1.5rem;">
+    ⚠️ ERROR 500
+  </div>
+
+  <h1 style="font-size: 2.75rem; font-weight: 900; letter-spacing: -0.02em; margin-bottom: 1rem;">
+    System Anomaly
+  </h1>
+
+  <p style="font-size: 1.1rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: 2rem;">
+    The Quiz Royale gameplay engine encountered an unexpected internal exception. Our engineer droids have been dispatched to investigate.
+  </p>
+
+  <div class="card" style="text-align: left; padding: 1.25rem 1.5rem; margin-bottom: 2rem; background: var(--bg-surface-elevated); border-left: 4px solid #ef4444;">
+    <div style="font-weight: 700; color: var(--text-primary); margin-bottom: 0.25rem;">Diagnostics Protocol:</div>
+    <div style="font-size: 0.9rem; color: var(--text-muted); line-height: 1.5;">
+      Your active game session score and progress data remain securely isolated. Try reloading the page or returning to the main dashboard.
+    </div>
+  </div>
+
+  <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+    <a href="{{ url_for('players.dashboard') if current_user.is_authenticated else url_for('players.landing') }}" class="btn btn-gold btn-lg">
+      Return to Safety
+    </a>
+    <button onclick="window.location.reload();" class="btn btn-outline btn-lg">
+      Reload Page
+    </button>
+  </div>
+</div>
+{% endblock %}
