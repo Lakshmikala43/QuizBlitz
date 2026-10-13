@@ -1,4 +1,6 @@
 import os
+import csv
+import io
 import json
 from datetime import datetime, timezone
 from flask import Blueprint, render_template, redirect, url_for, flash, request, abort, jsonify
@@ -304,3 +306,102 @@ def toggle_publish_question(question_id):
         log_admin_action("toggle_publish", "question", question.id, {"is_published": question.is_published})
         flash(f"Question publication set to {question.is_published}.", "success")
     return redirect(url_for("admin.list_questions"))
+
+
+# --- Bulk Import ---
+@admin_bp.route("/bulk-import", methods=["GET", "POST"])
+@admin_required
+def bulk_import():
+    """Bulk import questions from JSON or CSV with validation and duplicate prevention."""
+    if request.method == "POST":
+        file = request.files.get("import_file")
+        if not file or file.filename == "":
+            flash("Please choose a file to upload.", "warning")
+            return redirect(url_for("admin.bulk_import"))
+
+        filename = file.filename.lower()
+        imported_count = 0
+        skipped_count = 0
+        errors = []
+
+        try:
+            content = file.read().decode("utf-8", errors="ignore")
+            questions_payload = []
+
+            if filename.endswith(".json"):
+                questions_payload = json.loads(content)
+                if not isinstance(questions_payload, list):
+                    questions_payload = [questions_payload]
+            elif filename.endswith(".csv"):
+                reader = csv.DictReader(io.StringIO(content))
+                for row in reader:
+                    q_item = {
+                        "category_slug": row.get("category_slug", "").strip(),
+                        "difficulty": row.get("difficulty", "medium").strip().lower(),
+                        "question_text": row.get("question_text", "").strip(),
+                        "points": int(row.get("points", 100) or 100),
+                        "time_limit_sec": int(row.get("time_limit_sec", 15) or 15),
+                        "explanation": row.get("explanation", "").strip(),
+                        "options": [
+                            {"text": row.get("option_a", "").strip(), "is_correct": row.get("correct", "A").upper() == "A"},
+                            {"text": row.get("option_b", "").strip(), "is_correct": row.get("correct", "A").upper() == "B"},
+                            {"text": row.get("option_c", "").strip(), "is_correct": row.get("correct", "A").upper() == "C"},
+                            {"text": row.get("option_d", "").strip(), "is_correct": row.get("correct", "A").upper() == "D"},
+                        ]
+                    }
+                    questions_payload.append(q_item)
+            else:
+                flash("Unsupported file format. Please upload a .json or .csv file.", "danger")
+                return redirect(url_for("admin.bulk_import"))
+
+            # Ingest questions
+            for idx, q_dict in enumerate(questions_payload, 1):
+                q_text = q_dict.get("question_text", "").strip()
+                cat_slug = q_dict.get("category_slug", "").strip()
+                diff = q_dict.get("difficulty", "medium").strip().lower()
+                options = q_dict.get("options", [])
+                explanation = q_dict.get("explanation", "").strip()
+
+                if len(q_text) < 10 or len(options) != 4:
+                    errors.append(f"Row #{idx}: Invalid structure or options count.")
+                    skipped_count += 1
+                    continue
+
+                if question_repo.detect_duplicate_question(q_text):
+                    skipped_count += 1
+                    continue
+
+                cat = category_repo.get_by_slug(cat_slug) or category_repo.get_by_id(1)
+                if not cat:
+                    skipped_count += 1
+                    continue
+
+                q_data = {
+                    "category_id": cat.id,
+                    "question_text": q_text,
+                    "difficulty": diff if diff in {"easy", "medium", "hard"} else "medium",
+                    "explanation": explanation,
+                    "points": int(q_dict.get("points", 100)),
+                    "time_limit_sec": int(q_dict.get("time_limit_sec", 15)),
+                    "is_published": True,
+                }
+                options_data = [
+                    {
+                        "option_text": opt.get("text", opt.get("option_text", "")),
+                        "is_correct": bool(opt.get("is_correct", False)),
+                        "order_index": i,
+                    }
+                    for i, opt in enumerate(options)
+                ]
+
+                question_repo.create_question_with_options(q_data, options_data)
+                imported_count += 1
+
+            log_admin_action("bulk_import", "question", "batch", {"imported": imported_count, "skipped": skipped_count})
+            flash(f"Bulk import finished: {imported_count} questions imported, {skipped_count} skipped.", "success")
+        except Exception as e:
+            flash(f"Failed to parse import file: {str(e)}", "danger")
+
+        return redirect(url_for("admin.list_questions"))
+
+    return render_template("admin/bulk_import.html")
