@@ -135,27 +135,14 @@ class GameRepository(BaseRepository[QuizSession]):
 
     def get_user_match_history(
         self, user_id: int, page: int = 1, per_page: int = 10
-    ) -> Dict:
+    ):
         """Fetch paginated match history for a specific player."""
         query = (
             db.session.query(MatchResult)
             .filter_by(user_id=user_id)
             .order_by(MatchResult.recorded_at.desc())
         )
-        total = query.count()
-        offset = max(0, (page - 1) * per_page)
-        items = query.limit(per_page).offset(offset).all()
-        pages = max(1, (total + per_page - 1) // per_page)
-
-        return {
-            "items": items,
-            "total": total,
-            "page": page,
-            "per_page": per_page,
-            "pages": pages,
-            "has_prev": page > 1,
-            "has_next": page < pages,
-        }
+        return self.paginate(query, page=page, per_page=per_page)
 
     def get_recent_global_matches(self, limit: int = 10) -> List[MatchResult]:
         """Fetch recent completed matches across all players for the live activity feed."""
