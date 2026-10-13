@@ -137,6 +137,8 @@ def sample_category(app):
         )
         db.session.add(cat)
         db.session.commit()
+        _ = cat.id, cat.name, cat.slug, cat.description, cat.icon, cat.color_hex, cat.is_active, cat.sort_order
+        db.session.expunge(cat)
         return cat
 
 
@@ -171,4 +173,13 @@ def sample_questions(app, sample_category):
 
             questions.append(q)
         db.session.commit()
+
+        for q in questions:
+            _ = q.id, q.category_id, q.question_text, q.difficulty, q.explanation, q.points, q.time_limit_sec, q.is_published
+            for opt in q.options:
+                _ = opt.id, opt.question_id, opt.option_text, opt.is_correct, opt.order_index
+                db.session.expunge(opt)
+            db.session.expunge(q)
+
         return questions
+
