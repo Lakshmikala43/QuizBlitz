@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+
+{% block title %}Question Moderation Queue — Admin | Quiz Royale{% endblock %}
+
+{% block content %}
+<div style="max-width: 1100px; margin: 2rem auto;">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+    <div>
+      <div style="font-size: 0.85rem; color: var(--accent-coral); font-weight: 700; text-transform: uppercase;">Quality Assurance & Integrity</div>
+      <h1 style="font-size: 2.25rem; font-weight: 800;">Moderation Queue</h1>
+    </div>
+
+    <div style="display: flex; gap: 0.75rem;">
+      <a href="{{ url_for('admin.list_questions') }}" class="btn btn-outline btn-sm">Questions</a>
+      <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline btn-sm">&larr; Admin Center</a>
+    </div>
+  </div>
+
+  <!-- Status Filter Tabs -->
+  <div style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--color-border); padding-bottom: 0.75rem;">
+    <a href="{{ url_for('admin.list_reports', status='pending') }}" class="btn btn-sm {% if status_filter == 'pending' %}btn-primary{% else %}btn-outline{% endif %}">
+      Pending Review ({{ pending_count }})
+    </a>
+    <a href="{{ url_for('admin.list_reports', status='resolved') }}" class="btn btn-sm {% if status_filter == 'resolved' %}btn-primary{% else %}btn-outline{% endif %}">
+      Resolved
+    </a>
+    <a href="{{ url_for('admin.list_reports', status='dismissed') }}" class="btn btn-sm {% if status_filter == 'dismissed' %}btn-primary{% else %}btn-outline{% endif %}">
+      Dismissed
+    </a>
+    <a href="{{ url_for('admin.list_reports', status='all') }}" class="btn btn-sm {% if status_filter == 'all' %}btn-primary{% else %}btn-outline{% endif %}">
+      All History
+    </a>
+  </div>
+
+  <!-- Reports Container -->
+  <div class="card">
+    {% if reports %}
+      <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.95rem;">
+          <thead>
+            <tr style="border-bottom: 1px solid var(--color-border); color: var(--text-muted);">
+              <th style="padding: 0.75rem 1rem;">ID</th>
+              <th style="padding: 0.75rem 1rem; width: 35%;">Question Details</th>
+              <th style="padding: 0.75rem 1rem;">Reporter & Reason</th>
+              <th style="padding: 0.75rem 1rem;">Status</th>
+              <th style="padding: 0.75rem 1rem; text-align: right;">Resolution Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in reports %}
+              <tr style="border-bottom: 1px solid var(--color-border); vertical-align: top;">
+                <td style="padding: 1rem; color: var(--text-muted); font-family: var(--font-mono);">#{{ r.id }}</td>
+                <td style="padding: 1rem;">
+                  {% if r.question %}
+                    <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 0.35rem; line-height: 1.4;">
+                      {{ r.question.question_text }}
+                    </div>
+                    <div style="display: flex; gap: 0.5rem; align-items: center; font-size: 0.8rem;">
+                      <span class="pill-difficulty pill-{{ r.question.difficulty.lower() }}">{{ r.question.difficulty }}</span>
+                      <span style="color: var(--text-muted);">Category: {{ r.question.category.name if r.question.category else 'N/A' }}</span>
+                      <a href="{{ url_for('admin.edit_question', question_id=r.question_id) }}" target="_blank" style="color: var(--accent-gold); text-decoration: underline; margin-left: auto;">
+                        Edit Question ↗
+                      </a>
+                    </div>
+                  {% else %}
+                    <span style="color: var(--accent-coral); font-style: italic;">(Question deleted from database)</span>
+                  {% endif %}
+                </td>
+                <td style="padding: 1rem;">
+                  <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+                    <div style="font-size: 0.85rem; color: var(--text-primary); font-weight: 600;">
+                      @{{ r.reporter.username if r.reporter else 'Anonymous' }}
+                    </div>
+                    <span style="display: inline-block; padding: 0.15rem 0.5rem; border-radius: 999px; font-size: 0.75rem; font-weight: 700; background: rgba(244, 63, 94, 0.12); color: var(--accent-coral); width: fit-content;">
+                      {{ r.reason.replace('_', ' ')|title }}
+                    </span>
+                    {% if r.details %}
+                      <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem; background: var(--bg-surface-elevated); padding: 0.35rem 0.5rem; border-radius: var(--radius-sm); border: 1px solid var(--color-border);">
+                        "{{ r.details }}"
+                      </div>
+                    {% endif %}
+                    <span style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">
+                      {{ r.created_at.strftime('%b %d, %H:%M') if r.created_at else '' }}
+                    </span>
+                  </div>
+                </td>
+                <td style="padding: 1rem;">
+                  {% if r.status == 'pending' %}
+                    <span style="display: inline-block; padding: 0.2rem 0.6rem; border-radius: 999px; font-size: 0.75rem; font-weight: 700; background: rgba(245, 158, 11, 0.15); color: var(--accent-gold); border: 1px solid rgba(245, 158, 11, 0.3);">
+                      Pending
+                    </span>
+                  {% elif r.status == 'resolved' %}
+                    <span style="display: inline-block; padding: 0.2rem 0.6rem; border-radius: 999px; font-size: 0.75rem; font-weight: 700; background: rgba(34, 197, 94, 0.15); color: var(--color-success); border: 1px solid rgba(34, 197, 94, 0.3);">
+                      Resolved
+                    </span>
+                    {% if r.admin_notes %}
+                      <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">{{ r.admin_notes }}</div>
+                    {% endif %}
+                  {% else %}
+                    <span style="display: inline-block; padding: 0.2rem 0.6rem; border-radius: 999px; font-size: 0.75rem; font-weight: 600; background: rgba(148, 163, 184, 0.15); color: var(--text-muted);">
+                      Dismissed
+                    </span>
+                  {% endif %}
+                </td>
+                <td style="padding: 1rem; text-align: right;">
+                  {% if r.status == 'pending' %}
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem; align-items: flex-end;">
+                      <!-- Quick Resolve Form -->
+                      <form method="POST" action="{{ url_for('admin.resolve_report', report_id=r.id) }}" style="display: flex; flex-direction: column; gap: 0.35rem; align-items: flex-end;">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="text" name="admin_notes" placeholder="Resolution note..." style="font-size: 0.75rem; padding: 0.25rem 0.5rem; border-radius: 4px; border: 1px solid var(--color-border); background: var(--bg-surface-elevated); color: var(--text-primary); width: 160px;">
+                        <label style="font-size: 0.75rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.25rem; cursor: pointer;">
+                          <input type="checkbox" name="unpublish_question" value="1"> Unpublish Question
+                        </label>
+                        <div style="display: flex; gap: 0.35rem;">
+                          <button type="submit" class="btn btn-primary btn-sm" style="padding: 0.25rem 0.55rem; font-size: 0.75rem; background: var(--color-success); border-color: var(--color-success);">
+                            Resolve
+                          </button>
+                        </div>
+                      </form>
+
+                      <!-- Quick Dismiss Form -->
+                      <form method="POST" action="{{ url_for('admin.dismiss_report', report_id=r.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-outline btn-sm" style="padding: 0.25rem 0.55rem; font-size: 0.75rem;">
+                          Dismiss
+                        </button>
+                      </form>
+                    </div>
+                  {% else %}
+                    <span style="font-size: 0.8rem; color: var(--text-muted);">Completed</span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      {% if pagination.pages > 1 %}
+        <div style="display: flex; justify-content: center; gap: 0.5rem; padding: 1.5rem; border-top: 1px solid var(--color-border);">
+          {% if pagination.has_prev %}
+            <a href="{{ url_for('admin.list_reports', page=pagination.page-1, status=status_filter) }}" class="btn btn-outline btn-sm">&larr; Previous</a>
+          {% endif %}
+          <span style="padding: 0.35rem 0.75rem; font-size: 0.9rem; color: var(--text-muted);">
+            Page {{ pagination.page }} of {{ pagination.pages }} ({{ pagination.total }} items)
+          </span>
+          {% if pagination.has_next %}
+            <a href="{{ url_for('admin.list_reports', page=pagination.page+1, status=status_filter) }}" class="btn btn-outline btn-sm">Next &rarr;</a>
+          {% endif %}
+        </div>
+      {% endif %}
+
+    {% else %}
+      <div style="text-align: center; padding: 3rem 1rem;">
+        <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🛡️</div>
+        <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.25rem;">Moderation queue is empty</h3>
+        <p style="color: var(--text-muted); font-size: 0.9rem;">No reports match the selected "{{ status_filter }}" filter.</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
