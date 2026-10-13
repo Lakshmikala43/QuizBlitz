@@ -1,0 +1,89 @@
+version: '3.8'
+
+services:
+  # ==========================================
+  # Web Application Service (Flask + Gunicorn)
+  # ==========================================
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: quizroyale_web
+    restart: unless-stopped
+    environment:
+      - FLASK_ENV=production
+      - DATABASE_URL=postgresql://quizroyale:quizroyale_prod_pass@db:5432/quizroyale_prod
+      - SECRET_KEY=${SECRET_KEY:-quizroyale_hardened_production_secret_key_987}
+      - SOCKETIO_ASYNC_MODE=threading
+      - GUNICORN_WORKERS=4
+      - GUNICORN_THREADS=4
+    volumes:
+      - quizroyale_static:/app/app/static:ro
+      - quizroyale_logs:/app/logs
+      - quizroyale_instance:/app/instance
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - quizroyale_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/v1/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  # ==========================================
+  # Relational Database Service (PostgreSQL 16)
+  # ==========================================
+  db:
+    image: postgres:16-alpine
+    container_name: quizroyale_db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=quizroyale
+      - POSTGRES_PASSWORD=quizroyale_prod_pass
+      - POSTGRES_DB=quizroyale_prod
+    volumes:
+      - quizroyale_pgdata:/var/lib/postgresql/data
+    networks:
+      - quizroyale_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U quizroyale -d quizroyale_prod"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ==========================================
+  # Edge Reverse Proxy & Load Balancer (Nginx)
+  # ==========================================
+  nginx:
+    image: nginx:alpine
+    container_name: quizroyale_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - quizroyale_static:/app/app/static:ro
+    depends_on:
+      - web
+    networks:
+      - quizroyale_network
+
+networks:
+  quizroyale_network:
+    name: quizroyale_net
+    driver: bridge
+
+volumes:
+  quizroyale_pgdata:
+    name: quizroyale_pgdata
+  quizroyale_static:
+    name: quizroyale_static
+  quizroyale_logs:
+    name: quizroyale_logs
+  quizroyale_instance:
+    name: quizroyale_instance
