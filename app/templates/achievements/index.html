@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}Badges & Achievements — Quiz Royale{% endblock %}
+
+{% block content %}
+<div style="max-width: 900px; margin: 2rem auto;">
+  <div style="text-align: center; margin-bottom: 2.5rem;">
+    <h1 style="font-size: 2.5rem; font-weight: 800; letter-spacing: -0.02em;">Battlefield Badges</h1>
+    <p style="color: var(--text-secondary); margin-top: 0.5rem; font-size: 1.1rem;">
+      Prove your prowess across milestones and unlock permanent XP and Coin rewards.
+    </p>
+
+    {% if current_user.is_authenticated %}
+      <div style="margin: 1.5rem auto 0; max-width: 360px; background-color: var(--bg-surface); border: 1px solid var(--color-border); padding: 0.85rem 1.25rem; border-radius: var(--radius-full); display: flex; align-items: center; justify-content: space-between;">
+        <span style="font-weight: 600; font-size: 0.9rem; color: var(--text-secondary);">Unlocked Badges:</span>
+        <strong style="color: var(--accent-gold); font-size: 1.1rem;">{{ unlocked_count }} of {{ total_count }} ({{ ((unlocked_count / total_count * 100) if total_count > 0 else 0)|round|int }}%)</strong>
+      </div>
+    {% endif %}
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem;">
+    {% for ach in achievements %}
+      {% set is_unlocked = ach.get('is_unlocked', false) %}
+      <div class="card" style="display: flex; flex-direction: column; justify-content: space-between; position: relative; border-color: {% if is_unlocked %}var(--accent-purple){% else %}var(--color-border){% endif %}; opacity: {% if is_unlocked %}1{% else %}0.75{% endif %};">
+
+        <div>
+          <!-- Badge Icon & Tier -->
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+            <div style="width: 54px; height: 54px; border-radius: var(--radius-md); background: {% if is_unlocked %}linear-gradient(135deg, var(--accent-purple), var(--accent-gold)){% else %}var(--bg-surface-elevated){% endif %}; display: flex; align-items: center; justify-content: center; font-size: 1.75rem; box-shadow: {% if is_unlocked %}var(--shadow-glow){% else %}none{% endif %};">
+              {% if ach.icon == 'award' %}🎖️
+              {% elif ach.icon == 'zap' %}⚡
+              {% elif ach.icon == 'target' %}🎯
+              {% elif ach.icon == 'shield' %}🛡️
+              {% elif ach.icon == 'calendar' %}📅
+              {% else %}🏆
+              {% endif %}
+            </div>
+
+            <span style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; padding: 0.2rem 0.6rem; border-radius: var(--radius-full);
+              {% if ach.tier == 'platinum' %}background-color: #e0e7ff; color: #3730a3;
+              {% elif ach.tier == 'gold' %}background-color: rgba(245, 158, 11, 0.2); color: var(--accent-gold);
+              {% elif ach.tier == 'silver' %}background-color: rgba(148, 163, 184, 0.2); color: #cbd5e1;
+              {% else %}background-color: rgba(180, 83, 9, 0.2); color: #f59e0b;
+              {% endif %}">
+              {{ ach.tier }}
+            </span>
+          </div>
+
+          <h2 style="font-size: 1.2rem; font-weight: 700; margin-bottom: 0.35rem; color: var(--text-primary);">
+            {{ ach.title }}
+          </h2>
+          <p style="color: var(--text-secondary); font-size: 0.88rem; line-height: 1.5; margin-bottom: 1.25rem;">
+            {{ ach.description }}
+          </p>
+        </div>
+
+        <div style="border-top: 1px solid var(--color-border); padding-top: 0.85rem; display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem;">
+          <div style="display: flex; gap: 0.5rem; font-weight: 700;">
+            <span style="color: var(--accent-purple);">+{{ ach.xp_reward }} XP</span>
+            <span style="color: var(--accent-gold);">+{{ ach.coin_reward }} 🪙</span>
+          </div>
+
+          {% if is_unlocked %}
+            <span style="color: var(--color-success); font-weight: 700; font-size: 0.8rem;">✓ Unlocked</span>
+          {% else %}
+            <span style="color: var(--text-muted); font-size: 0.8rem;">Locked</span>
+          {% endif %}
+        </div>
+
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
