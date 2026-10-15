@@ -6,26 +6,26 @@
 
 | Metric | Total Lines | Code Only (SLOC) | Files |
 |---|---|---|---|
-| **Production Source (Frontend + Backend)** | 572,640 | **570,385** | 119 |
+| **Production Source (Frontend + Backend)** | 559,961 | **557,707** | 127 |
 | — Frontend (HTML / CSS / JS) | 4,571 | 3,903 | 40 |
-| — Backend (Python Flask / ORM) | 568,069 | 566,482 | 79 |
+| — Backend (Python Flask / ORM) | 555,390 | 553,804 | 87 |
 | **Test Suites** | 1,402 | 1,100 | 9 |
 | **Documentation & Specs** | 1,482 | 1,268 | 12 |
-| **Tooling & Scripts** | 3,291 | 2,819 | 11 |
+| **Tooling & Scripts** | 3,483 | 2,971 | 12 |
 | **Configuration** | 890 | 742 | 16 |
 | **Vendored / Generated Code** | 0 | 0 | 0 |
-| **Grand Total (Entire Repository)** | **579,705** | **576,314** | 167 |
+| **Grand Total (Entire Repository)** | **567,218** | **563,788** | 176 |
 
 ## 2. Git & Pull Request Activity
 
-- **Total Git Commits**: 220
-- **Merged Pull Requests**: 108
+- **Total Git Commits**: 222
+- **Merged Pull Requests**: 109
 
 ## 3. Breakdown by Language
 
 | Language | Files | Code Lines (SLOC) | Total Lines |
 |---|---|---|---|
-| Python | 100 | 570,439 | 572,819 |
+| Python | 109 | 557,913 | 560,332 |
 | HTML | 35 | 2,877 | 3,315 |
 | Markdown | 14 | 1,085 | 1,292 |
 | JavaScript | 3 | 624 | 758 |

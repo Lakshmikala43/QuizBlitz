@@ -1,3 +1,15 @@
 """Algorithms package."""
 from .graph_network_solver import graph_service
 from .cryptographic_verification import crypto_service
+from .sorting_network_analyzer import service_instance as sorting_network_analyzer_service
+from .spatial_geometry_quadtree import service_instance as spatial_geometry_quadtree_service
+from .dynamic_programming_knapsack import service_instance as dynamic_programming_knapsack_service
+from .string_pattern_automata import service_instance as string_pattern_automata_service
+from .huffman_compression_engine import service_instance as huffman_compression_engine_service
+from .matrix_decomposition_solver import service_instance as matrix_decomposition_solver_service
+from .discrete_logarithm_solver import service_instance as discrete_logarithm_solver_service
+from .markov_chain_monte_carlo import service_instance as markov_chain_monte_carlo_service
+from .bayesian_inference_filter import service_instance as bayesian_inference_filter_service
+from .shortest_path_multimodal import service_instance as shortest_path_multimodal_service
+from .convex_hull_geometry import service_instance as convex_hull_geometry_service
+from .regular_expression_nfa import service_instance as regular_expression_nfa_service
