@@ -8,4 +8,4 @@ if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     host = os.environ.get("HOST", "127.0.0.1")
     print(f"Starting Quiz Royale server at http://{host}:{port} ...")
-    socketio.run(app, host=host, port=port, debug=app.config.get("DEBUG", True))
+    socketio.run(app, host=host, port=port, debug=app.config.get("DEBUG", True), allow_unsafe_werkzeug=True)
