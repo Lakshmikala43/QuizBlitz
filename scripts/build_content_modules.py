@@ -242,6 +242,36 @@ QUESTION_BANKS = {
             ("Serverless & Microservices", "Cold start optimization, distributed sagas for compensation, event bus architectures, and gRPC protobuf serialization."),
         ],
     },
+    "ai_ml_bank": {
+        "title": "Machine Learning, Deep Learning & AI Systems",
+        "category": "Artificial Intelligence & Data Science",
+        "domain": "AI & ML",
+        "subtopics": [
+            ("Transformer Architectures & Attention", "Multi-head scaled dot-product attention, RoPE positional embeddings, KV cache optimization, and FlashAttention."),
+            ("Deep Learning Optimization", "AdamW weight decay, cosine annealing learning rate schedules, gradient clipping, and mixed-precision fp16/bf16."),
+            ("PyTorch Internals & Autograd", "Computation graph DAG, backward hook mechanics, torch.compile TorchDynamo inductor, and DDP gradient synchronization."),
+            ("Large Language Model Alignment", "Reinforcement Learning from Human Feedback (RLHF), DPO direct preference optimization, PPO policy gradients, and LoRA PEFT."),
+            ("Convolutional & Vision Models", "Residual connections vanishing gradient relief, Vision Transformers (ViT) patch projections, and feature pyramid networks."),
+            ("Generative Diffusion Models", "Denoising Diffusion Probabilistic Models (DDPM), score matching, classifier-free guidance, and latent diffusion latent spaces."),
+            ("Vector Databases & Retrieval (RAG)", "HNSW graph indexing, approximate nearest neighbor cosine similarity, reciprocal rank fusion, and embedding quantization."),
+            ("MLOps & Model Evaluation", "Data drift PSI detection, model serving latency Triton/vLLM, ONNX runtime graph optimization, and calibration metrics."),
+        ],
+    },
+    "mobile_systems_bank": {
+        "title": "Mobile Systems, Android & iOS Architecture",
+        "category": "Mobile Engineering",
+        "domain": "Mobile Systems",
+        "subtopics": [
+            ("Android Jetpack & Architecture", "ViewModel SavedStateHandle lifecycle, StateFlow vs SharedFlow coroutines, Room database migrations, and Hilt dependency injection."),
+            ("Jetpack Compose UI", "Recomposition scopes, snapshot state system, remember vs rememberSaveable, and Modifier layout node traversal."),
+            ("iOS Swift & SwiftUI", "Swift concurrency async/await tasks, Actor reentrancy, SwiftUI View identity DAG, and Combine publisher pipelines."),
+            ("Mobile Memory & Performance", "Android low memory killer (LMK), iOS ARC retain cycles, leak canary memory heap dumps, and frame rendering jank 120Hz."),
+            ("Mobile Security & Cryptography", "Android Keystore hardware-backed keys, iOS Keychain SecItem, certificate pinning, and biometric prompt authentication."),
+            ("Cross-Platform Frameworks", "React Native Hermes JS engine and JSI fabric renderer, Flutter Skia/Impeller rendering pipeline, and platform channels."),
+            ("Background Processing", "Android WorkManager constraints, JobScheduler battery optimizations, iOS BGAppRefreshTask, and push notification APNs payload."),
+            ("Mobile Networking & Offline Sync", "Apollo GraphQL caching, Retrofit OkHttp interceptors, SQLite WAL sync queues, and exponential backoff retry policies."),
+        ],
+    },
 }
 
 
@@ -1026,6 +1056,8 @@ GENERATORS = {
     "sports_bank": lambda: generate_question_bank_module("sports_bank", 1200),
     "entertainment_bank": lambda: generate_question_bank_module("entertainment_bank", 1200),
     "cloud_devops_bank": lambda: generate_question_bank_module("cloud_devops_bank", 1200),
+    "ai_ml_bank": lambda: generate_question_bank_module("ai_ml_bank", 1200),
+    "mobile_systems_bank": lambda: generate_question_bank_module("mobile_systems_bank", 1200),
     # 5 Specialized Engines
     "generators_math": generate_generators_math_module,
     "generators_logic": generate_generators_logic_module,
