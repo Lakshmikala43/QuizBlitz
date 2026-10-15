@@ -1,5 +1,5 @@
 """
-Quiz Royale — Content Banks & Domain Engines Unified Registry
+Quiz Royale -- Content Banks and Domain Engines Unified Registry
 """
 
 from typing import Dict, List, Any
@@ -18,6 +18,8 @@ from .science_bank import repository as science_repo
 from .sports_bank import repository as sports_repo
 from .entertainment_bank import repository as entertainment_repo
 from .cloud_devops_bank import repository as cloud_repo
+from .ai_ml_bank import repository as ai_ml_repo
+from .mobile_systems_bank import repository as mobile_repo
 
 from ..engine.generators_math import math_engine
 from ..engine.generators_logic import logic_engine
@@ -42,6 +44,8 @@ ALL_BANKS = {
     "sports": sports_repo,
     "entertainment": entertainment_repo,
     "cloud": cloud_repo,
+    "ai_ml": ai_ml_repo,
+    "mobile": mobile_repo,
 }
 
 def get_total_questions_count() -> int:
