@@ -2,7 +2,7 @@
 
 [![CI Pipeline](https://github.com/example/quiz-royale/actions/workflows/ci.yml/badge.svg)](https://github.com/example/quiz-royale/actions)
 [![Python 3.11 | 3.12 | 3.13](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-blue.svg)](https://www.python.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: Proprietary](https://img.shields.io/badge/License-Proprietary-red.svg)]()
 [![API Keys](https://img.shields.io/badge/External%20API%20Keys-Zero%20(100%25%20Offline)-brightgreen.svg)]()
 [![Pull Requests](https://img.shields.io/badge/Pull%20Requests-80%2B%20Merged-purple.svg)]()
 [![Test Suite](https://img.shields.io/badge/pytest-47%20Passed-success.svg)]()
@@ -227,6 +227,6 @@ Test suite coverage breakdown:
 
 ---
 
-## 9. License
+## 9. License & Ownership
 
-This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
+All rights reserved. This repository and software are proprietary. No open source license granted.
